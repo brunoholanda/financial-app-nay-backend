@@ -5,6 +5,7 @@ import { Transaction } from '../../database/entities/transaction.entity';
 import { LedgerType } from '../../common/enums/ledger-type.enum';
 import { RecurringSeriesService } from '../recurring/recurring-series.service';
 import { getMonthDateBounds } from '../../common/utils/recurring-period';
+import { SavingsService } from '../savings/savings.service';
 
 export interface CategoryBreakdownRow {
   categoryId: string;
@@ -19,6 +20,7 @@ export class DashboardService {
     @InjectRepository(Transaction)
     private readonly txRepo: Repository<Transaction>,
     private readonly recurringSeriesService: RecurringSeriesService,
+    private readonly savingsService: SavingsService,
   ) {}
 
   private resolveYearMonth(year?: number, month?: number) {
@@ -141,6 +143,12 @@ export class DashboardService {
         a.categoryName.localeCompare(b.categoryName, 'pt-BR'),
       );
 
+    const savingsSlice = await this.savingsService.getDashboardSlice(
+      workspaceId,
+      ym.year,
+      ym.month,
+    );
+
     return {
       year: ym.year,
       month: ym.month,
@@ -152,6 +160,8 @@ export class DashboardService {
       singlesExpenseTotal: expenseSingles?.total ?? '0',
       recurringIncomeTotal: recInc.toFixed(2),
       recurringExpenseTotal: recExp.toFixed(2),
+      savingsInCompetenceMonth: savingsSlice.savingsInCompetenceMonth,
+      savingsByMonth: savingsSlice.savingsByMonth,
     };
   }
 }
