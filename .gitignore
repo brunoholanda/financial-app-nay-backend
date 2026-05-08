@@ -39,5 +39,6 @@ coverage
 *.sln
 *.sw?
 
-# OS
-Thumbs.db
+# Uploads (documentos por workspace; não versionar ficheiros reais)
+uploads/
+

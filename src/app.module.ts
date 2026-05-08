@@ -11,6 +11,7 @@ import { Investment } from './database/entities/investment.entity';
 import { InvestmentTransaction } from './database/entities/investment-transaction.entity';
 import { YieldHistory } from './database/entities/yield-history.entity';
 import { SavingsEntry } from './database/entities/savings-entry.entity';
+import { WorkspaceDocument } from './database/entities/workspace-document.entity';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -22,6 +23,7 @@ import { RecurringModule } from './modules/recurring/recurring.module';
 import { WorkspaceAccountsModule } from './modules/workspace-accounts/workspace-accounts.module';
 import { InvestmentsModule } from './modules/investments/investments.module';
 import { SavingsModule } from './modules/savings/savings.module';
+import { WorkspaceDocumentsModule } from './modules/workspace-documents/workspace-documents.module';
 import { SeedService } from './database/seed.service';
 
 @Module({
@@ -48,6 +50,7 @@ import { SeedService } from './database/seed.service';
           InvestmentTransaction,
           YieldHistory,
           SavingsEntry,
+          WorkspaceDocument,
         ],
         synchronize: config.get('DATABASE_SYNC', 'true') === 'true',
         logging: config.get('DATABASE_LOGGING', 'false') === 'true',
@@ -65,6 +68,7 @@ import { SeedService } from './database/seed.service';
     WorkspaceAccountsModule,
     InvestmentsModule,
     SavingsModule,
+    WorkspaceDocumentsModule,
   ],
   providers: [SeedService],
 })
