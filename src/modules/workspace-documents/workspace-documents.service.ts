@@ -9,12 +9,13 @@ import * as fs from 'fs/promises';
 import { createReadStream, existsSync } from 'fs';
 import { join, extname, basename } from 'path';
 import { randomUUID } from 'crypto';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { WorkspaceDocument } from '../../database/entities/workspace-document.entity';
 import {
   CreateWorkspaceDocumentDto,
   UpdateWorkspaceDocumentDto,
 } from './dto/workspace-document.dto';
+import type { ListWorkspaceDocumentsQueryDto } from './dto/list-workspace-documents-query.dto';
 
 import { WORKSPACE_DOCUMENT_MAX_BYTES } from './workspace-documents.constants';
 
@@ -75,11 +76,42 @@ export class WorkspaceDocumentsService {
     return join(this.resolveDir(workspaceId), storedFileName);
   }
 
-  async list(workspaceId: string): Promise<WorkspaceDocument[]> {
-    return this.repo.find({
-      where: { workspaceId },
-      order: { createdAt: 'DESC' },
-    });
+  async list(
+    workspaceId: string,
+    query?: ListWorkspaceDocumentsQueryDto,
+  ): Promise<WorkspaceDocument[]> {
+    const qb = this.repo
+      .createQueryBuilder('d')
+      .where('d.workspaceId = :wid', { wid: workspaceId });
+
+    if (query?.scope) {
+      qb.andWhere('d.personScope = :scope', { scope: query.scope });
+    }
+    if (query?.kind) {
+      qb.andWhere('d.kind = :kind', { kind: query.kind });
+    }
+    if (query?.q?.trim()) {
+      const term = `%${query.q.trim()}%`;
+      qb.andWhere(
+        new Brackets((w) => {
+          w.where('d.description ILIKE :term', { term }).orWhere(
+            'd.originalFileName ILIKE :term',
+            { term },
+          );
+        }),
+      );
+    }
+    const from = query?.createdFrom?.slice(0, 10);
+    const to = query?.createdTo?.slice(0, 10);
+    if (from) {
+      qb.andWhere('d.createdAt >= :cf', { cf: `${from}T00:00:00.000Z` });
+    }
+    if (to) {
+      qb.andWhere('d.createdAt <= :ct', { ct: `${to}T23:59:59.999Z` });
+    }
+
+    qb.orderBy('d.createdAt', 'DESC');
+    return qb.getMany();
   }
 
   validateUploadFile(file: MemoryUploadedFile): void {
@@ -119,6 +151,7 @@ export class WorkspaceDocumentsService {
     const row = this.repo.create({
       workspaceId,
       kind: dto.kind,
+      personScope: dto.personScope,
       description: dto.description?.trim() || null,
       originalFileName: safeName || `documento${ext}`,
       storedFileName,
@@ -136,6 +169,7 @@ export class WorkspaceDocumentsService {
     const row = await this.repo.findOne({ where: { id, workspaceId } });
     if (!row) throw new NotFoundException('Documento não encontrado');
     if (dto.kind !== undefined) row.kind = dto.kind;
+    if (dto.personScope !== undefined) row.personScope = dto.personScope;
     if (dto.description !== undefined) {
       row.description =
         dto.description === null ? null : dto.description.trim() || null;

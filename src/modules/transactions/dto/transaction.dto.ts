@@ -33,7 +33,9 @@ export class CreateTransactionDto {
   paymentSource: PaymentSource;
 
   @ValidateIf(
-    (o: CreateTransactionDto) => o.paymentSource === PaymentSource.ACCOUNT,
+    (o: CreateTransactionDto) =>
+      o.paymentSource === PaymentSource.ACCOUNT ||
+      o.paymentSource === PaymentSource.CREDIT_CARD,
   )
   @IsUUID()
   workspaceAccountId?: string;

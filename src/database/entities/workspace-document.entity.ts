@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { WorkspaceDocumentKind } from '../../common/enums/workspace-document-kind.enum';
+import { WorkspaceDocumentScope } from '../../common/enums/workspace-document-scope.enum';
 import { Workspace } from './workspace.entity';
 
 @Entity('workspace_documents')
@@ -27,6 +28,15 @@ export class WorkspaceDocument {
     enum: WorkspaceDocumentKind,
   })
   kind: WorkspaceDocumentKind;
+
+  /** Pessoa física ou jurídica — agrupa documentos na área do sistema */
+  @Column({
+    type: 'enum',
+    enum: WorkspaceDocumentScope,
+    name: 'person_scope',
+    default: WorkspaceDocumentScope.PF,
+  })
+  personScope: WorkspaceDocumentScope;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;

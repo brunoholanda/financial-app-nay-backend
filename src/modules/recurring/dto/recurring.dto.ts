@@ -71,11 +71,9 @@ export class CreateRecurringSeriesDto {
 
 
   @ValidateIf(
-
     (o: CreateRecurringSeriesDto) =>
-
-      o.paymentSource === PaymentSource.ACCOUNT,
-
+      o.paymentSource === PaymentSource.ACCOUNT ||
+      o.paymentSource === PaymentSource.CREDIT_CARD,
   )
 
   @IsUUID()

@@ -16,5 +16,6 @@ import { WorkspaceAccountsModule } from '../workspace-accounts/workspace-account
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService],
+  exports: [TransactionsService],
 })
 export class TransactionsModule {}

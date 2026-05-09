@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   StreamableFile,
   UploadedFile,
@@ -31,6 +32,7 @@ import {
   CreateWorkspaceDocumentDto,
   UpdateWorkspaceDocumentDto,
 } from './dto/workspace-document.dto';
+import { ListWorkspaceDocumentsQueryDto } from './dto/list-workspace-documents-query.dto';
 import { WORKSPACE_DOCUMENT_MAX_BYTES } from './workspace-documents.constants';
 
 function attachmentDisposition(fileName: string): string {
@@ -55,9 +57,13 @@ export class WorkspaceDocumentsController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+  async list(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Query() query: ListWorkspaceDocumentsQueryDto,
+  ) {
     const workspaceId = await this.ws(user, req);
-    return this.documentsService.list(workspaceId);
+    return this.documentsService.list(workspaceId, query);
   }
 
   @Post()

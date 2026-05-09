@@ -90,7 +90,7 @@ export class RecurringSeriesService {
       return { workspaceAccountId: null };
     }
     if (!accountId) {
-      throw new BadRequestException('Selecione a conta bancária');
+      throw new BadRequestException('Selecione a conta vinculada');
     }
     await this.workspaceAccounts.assertAccountInWorkspace(
       workspaceId,
@@ -173,7 +173,7 @@ export class RecurringSeriesService {
 
     const nextSource = dto.paymentSource ?? s.paymentSource;
     let accForEnforce: string | null | undefined;
-    if (dto.paymentSource === PaymentSource.CASH) {
+    if (nextSource === PaymentSource.CASH) {
       accForEnforce = null;
     } else if (dto.workspaceAccountId !== undefined) {
       accForEnforce = dto.workspaceAccountId;
@@ -218,7 +218,12 @@ export class RecurringSeriesService {
     rows: RecurringSeries[],
     year: number,
     month: number,
-    filters?: { categoryId?: string; type?: LedgerType },
+    filters?: {
+      categoryId?: string;
+      type?: LedgerType;
+      paymentSource?: PaymentSource;
+      workspaceAccountId?: string;
+    },
   ): RecurringMonthItemDto[] {
     const items: RecurringMonthItemDto[] = [];
     for (const row of rows) {
@@ -236,6 +241,15 @@ export class RecurringSeriesService {
       if (filters?.categoryId && row.categoryId !== filters.categoryId)
         continue;
       if (filters?.type && row.type !== filters.type) continue;
+      if (
+        filters?.paymentSource &&
+        row.paymentSource !== filters.paymentSource
+      ) {
+        continue;
+      }
+      if (filters?.workspaceAccountId) {
+        if (row.workspaceAccountId !== filters.workspaceAccountId) continue;
+      }
 
       items.push({
         seriesId: row.id,

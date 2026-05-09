@@ -57,7 +57,7 @@ export class TransactionsService {
       return { workspaceAccountId: null };
     }
     if (!accountId) {
-      throw new BadRequestException('Selecione a conta bancária');
+      throw new BadRequestException('Selecione a conta vinculada');
     }
     await this.workspaceAccounts.assertAccountInWorkspace(
       workspaceId,
@@ -108,7 +108,7 @@ export class TransactionsService {
     }
     const nextSource = dto.paymentSource ?? tx.paymentSource;
     let accForEnforce: string | null | undefined;
-    if (dto.paymentSource === PaymentSource.CASH) {
+    if (nextSource === PaymentSource.CASH) {
       accForEnforce = null;
     } else if (dto.workspaceAccountId !== undefined) {
       accForEnforce = dto.workspaceAccountId;
@@ -166,6 +166,14 @@ export class TransactionsService {
     if (query.type) {
       qb.andWhere('t.type = :type', { type: query.type });
     }
+    if (query.paymentSource) {
+      qb.andWhere('t.paymentSource = :ps', { ps: query.paymentSource });
+    }
+    if (query.workspaceAccountId) {
+      qb.andWhere('t.workspaceAccountId = :wacc', {
+        wacc: query.workspaceAccountId,
+      });
+    }
 
     const transactions = await qb.getMany();
 
@@ -179,6 +187,8 @@ export class TransactionsService {
         {
           categoryId: query.categoryId,
           type: query.type,
+          paymentSource: query.paymentSource,
+          workspaceAccountId: query.workspaceAccountId,
         },
       );
 

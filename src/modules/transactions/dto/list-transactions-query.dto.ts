@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LedgerType } from '../../../common/enums/ledger-type.enum';
+import { PaymentSource } from '../../../common/enums/payment-source.enum';
 
 export class ListTransactionsQueryDto {
   @IsOptional()
@@ -32,6 +33,14 @@ export class ListTransactionsQueryDto {
   @IsOptional()
   @IsEnum(LedgerType)
   type?: LedgerType;
+
+  @IsOptional()
+  @IsEnum(PaymentSource)
+  paymentSource?: PaymentSource;
+
+  @IsOptional()
+  @IsUUID()
+  workspaceAccountId?: string;
 
   @IsOptional()
   @IsDateString()

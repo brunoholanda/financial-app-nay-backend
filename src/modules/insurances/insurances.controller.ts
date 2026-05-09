@@ -1,0 +1,86 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import type { Request } from 'express';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../common/enums/user-role.enum';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
+import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
+import { InsurancesService } from './insurances.service';
+import {
+  CreateWorkspaceInsuranceDto,
+  UpdateWorkspaceInsuranceDto,
+} from './dto/workspace-insurance.dto';
+
+@Controller('insurances')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class InsurancesController {
+  constructor(
+    private readonly insurancesService: InsurancesService,
+    private readonly workspaceAccess: WorkspaceAccessService,
+  ) {}
+
+  private async ws(user: JwtPayload, req: Request) {
+    return this.workspaceAccess.resolveWorkspaceId(
+      user,
+      req.headers as Record<string, string | string[] | undefined>,
+    );
+  }
+
+  @Get()
+  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+    const workspaceId = await this.ws(user, req);
+    return this.insurancesService.list(workspaceId);
+  }
+
+  @Get('alerts')
+  async alerts(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+    const workspaceId = await this.ws(user, req);
+    return this.insurancesService.getAlerts(workspaceId);
+  }
+
+  @Post()
+  @Roles(UserRole.MASTER)
+  async create(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Body() dto: CreateWorkspaceInsuranceDto,
+  ) {
+    const workspaceId = await this.ws(user, req);
+    return this.insurancesService.create(workspaceId, dto);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.MASTER)
+  async update(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: UpdateWorkspaceInsuranceDto,
+  ) {
+    const workspaceId = await this.ws(user, req);
+    return this.insurancesService.update(workspaceId, id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.MASTER)
+  async remove(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Param('id') id: string,
+  ) {
+    const workspaceId = await this.ws(user, req);
+    await this.insurancesService.remove(workspaceId, id);
+  }
+}
