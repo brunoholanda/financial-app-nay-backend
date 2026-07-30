@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import {
   CreateWorkspaceInsuranceDto,
   UpdateWorkspaceInsuranceDto,
 } from './dto/workspace-insurance.dto';
+import { ListInsurancesQueryDto } from './dto/list-insurances-query.dto';
 
 @Controller('insurances')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -39,9 +41,13 @@ export class InsurancesController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+  async list(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Query() query: ListInsurancesQueryDto,
+  ) {
     const workspaceId = await this.ws(user, req);
-    return this.insurancesService.list(workspaceId);
+    return this.insurancesService.list(workspaceId, query);
   }
 
   @Get('alerts')

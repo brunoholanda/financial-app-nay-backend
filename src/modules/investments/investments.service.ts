@@ -10,11 +10,21 @@ import { InvestmentTransaction } from '../../database/entities/investment-transa
 import { YieldHistory } from '../../database/entities/yield-history.entity';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
 import { UpdateInvestmentDto } from './dto/update-investment.dto';
-import { ListInvestmentsQueryDto } from './dto/list-investments-query.dto';
+import { ListInvestmentsQueryDto, INVESTMENT_SORT_FIELDS } from './dto/list-investments-query.dto';
+import {
+  INVESTMENT_CASHFLOW_SORT_FIELDS,
+  ListInvestmentCashflowsQueryDto,
+  ListYieldHistoryQueryDto,
+  YIELD_HISTORY_SORT_FIELDS,
+} from './dto/list-investment-sub-query.dto';
 import { WorkspaceAccountsService } from '../workspace-accounts/workspace-accounts.service';
 import { InvestmentTransactionKind } from '../../common/enums/investment-transaction-type.enum';
 import { CreateInvestmentCashflowDto } from './dto/investment-cashflow.dto';
 import { CreateYieldHistoryDto } from './dto/yield-history.dto';
+import {
+  applyQueryBuilderOrder,
+  resolveFindOrder,
+} from '../../common/utils/list-sort';
 
 @Injectable()
 export class InvestmentsService {
@@ -135,9 +145,7 @@ export class InvestmentsService {
     const qb = this.invRepo
       .createQueryBuilder('i')
       .leftJoinAndSelect('i.workspaceAccount', 'acc')
-      .where('i.workspaceId = :workspaceId', { workspaceId })
-      .orderBy('i.startDate', 'DESC')
-      .addOrderBy('i.name', 'ASC');
+      .where('i.workspaceId = :workspaceId', { workspaceId });
 
     if (query.workspaceAccountId) {
       qb.andWhere('i.workspaceAccountId = :aid', {
@@ -149,6 +157,29 @@ export class InvestmentsService {
     }
     if (query.liquidity) {
       qb.andWhere('i.liquidityType = :lq', { lq: query.liquidity });
+    }
+
+    applyQueryBuilderOrder(
+      qb,
+      'i',
+      query,
+      INVESTMENT_SORT_FIELDS,
+      'startDate',
+      'DESC',
+      {
+        'workspaceAccount.name': 'acc.name',
+        instrumentType: 'i.instrumentType',
+        liquidityType: 'i.liquidityType',
+        investedAmount: 'i.investedAmount',
+        currentAmount: 'i.currentAmount',
+        startDate: 'i.startDate',
+        endDate: 'i.endDate',
+        name: 'i.name',
+        createdAt: 'i.createdAt',
+      },
+    );
+    if (!query.sortBy) {
+      qb.addOrderBy('i.name', 'ASC');
     }
 
     return qb.getMany();
@@ -232,11 +263,18 @@ export class InvestmentsService {
     return this.getInvestmentById(workspaceId, investmentId);
   }
 
-  async listCashflows(workspaceId: string, investmentId: string) {
+  async listCashflows(
+    workspaceId: string,
+    investmentId: string,
+    query?: ListInvestmentCashflowsQueryDto,
+  ) {
     await this.ensureExists(workspaceId, investmentId);
     return this.invTxRepo.find({
       where: { investmentId },
-      order: { date: 'DESC', createdAt: 'DESC' },
+      order: resolveFindOrder(query, INVESTMENT_CASHFLOW_SORT_FIELDS, {
+        date: 'DESC',
+        createdAt: 'DESC',
+      }),
     });
   }
 
@@ -259,11 +297,18 @@ export class InvestmentsService {
     return row;
   }
 
-  async listYieldHistory(workspaceId: string, investmentId: string) {
+  async listYieldHistory(
+    workspaceId: string,
+    investmentId: string,
+    query?: ListYieldHistoryQueryDto,
+  ) {
     await this.ensureExists(workspaceId, investmentId);
     return this.yieldRepo.find({
       where: { investmentId },
-      order: { date: 'ASC', createdAt: 'ASC' },
+      order: resolveFindOrder(query, YIELD_HISTORY_SORT_FIELDS, {
+        date: 'ASC',
+        createdAt: 'ASC',
+      }),
     });
   }
 

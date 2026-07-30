@@ -11,6 +11,11 @@ import { RecurringSeries } from '../../database/entities/recurring-series.entity
 import { Investment } from '../../database/entities/investment.entity';
 import { CreateWorkspaceAccountDto } from './dto/workspace-account.dto';
 import { UpdateWorkspaceAccountDto } from './dto/update-workspace-account.dto';
+import {
+  ListWorkspaceAccountsQueryDto,
+  WORKSPACE_ACCOUNT_SORT_FIELDS,
+} from './dto/list-workspace-accounts-query.dto';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 @Injectable()
 export class WorkspaceAccountsService {
@@ -25,10 +30,13 @@ export class WorkspaceAccountsService {
     private readonly invRepo: Repository<Investment>,
   ) {}
 
-  list(workspaceId: string) {
+  list(workspaceId: string, query?: ListWorkspaceAccountsQueryDto) {
     return this.accountRepo.find({
       where: { workspaceId },
-      order: { name: 'ASC', createdAt: 'ASC' },
+      order: resolveFindOrder(query, WORKSPACE_ACCOUNT_SORT_FIELDS, {
+        name: 'ASC',
+        createdAt: 'ASC',
+      }),
     });
   }
 

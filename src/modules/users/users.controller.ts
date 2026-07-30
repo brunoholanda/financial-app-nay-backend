@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { CreateClientUserDto } from './dto/create-client-user.dto';
 import { SetClientActiveDto } from './dto/set-client-active.dto';
+import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { WORKSPACE_HEADER } from '../../common/constants';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -40,6 +42,7 @@ export class UsersController {
   async listForWorkspace(
     @CurrentUser() master: JwtPayload,
     @Req() req: Request,
+    @Query() query: ListUsersQueryDto,
   ) {
     const raw = req.headers[WORKSPACE_HEADER];
     const workspaceId =
@@ -49,7 +52,7 @@ export class UsersController {
         `Header ${WORKSPACE_HEADER} is required`,
       );
     }
-    return this.usersService.listByWorkspace(master.sub, workspaceId);
+    return this.usersService.listByWorkspace(master.sub, workspaceId, query);
   }
 
   @Patch('clients/:id/active')

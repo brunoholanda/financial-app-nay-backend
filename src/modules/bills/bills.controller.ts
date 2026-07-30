@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -23,6 +24,7 @@ import {
   PayWorkspaceBillDto,
   UpdateWorkspaceBillDto,
 } from './dto/workspace-bill.dto';
+import { ListBillsQueryDto } from './dto/list-bills-query.dto';
 
 @Controller('bills')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -40,9 +42,13 @@ export class BillsController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+  async list(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Query() query: ListBillsQueryDto,
+  ) {
     const workspaceId = await this.ws(user, req);
-    return this.billsService.list(workspaceId);
+    return this.billsService.list(workspaceId, query);
   }
 
   @Get('alerts')

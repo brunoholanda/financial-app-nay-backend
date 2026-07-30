@@ -10,7 +10,12 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../../database/entities/user.entity';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { CreateClientUserDto } from './dto/create-client-user.dto';
+import {
+  ListUsersQueryDto,
+  USER_SORT_FIELDS,
+} from './dto/list-users-query.dto';
 import { Workspace } from '../../database/entities/workspace.entity';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 @Injectable()
 export class UsersService {
@@ -58,7 +63,11 @@ export class UsersService {
     };
   }
 
-  async listByWorkspace(masterId: string, workspaceId: string) {
+  async listByWorkspace(
+    masterId: string,
+    workspaceId: string,
+    query?: ListUsersQueryDto,
+  ) {
     const workspace = await this.workspaceRepo.findOne({
       where: { id: workspaceId, createdById: masterId },
     });
@@ -76,7 +85,9 @@ export class UsersService {
         'isActive',
         'createdAt',
       ],
-      order: { createdAt: 'DESC' },
+      order: resolveFindOrder(query, USER_SORT_FIELDS, {
+        createdAt: 'DESC',
+      }),
     });
   }
 

@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
   CreateRecurringSeriesDto,
   UpdateRecurringSeriesDto,
 } from './dto/recurring.dto';
+import { ListRecurringQueryDto } from './dto/list-recurring-query.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -46,12 +48,16 @@ export class RecurringSeriesController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+  async list(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Query() query: ListRecurringQueryDto,
+  ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
       req.headers as Record<string, string | string[] | undefined>,
     );
-    return this.recurringSeries.listAll(workspaceId);
+    return this.recurringSeries.listAll(workspaceId, query);
   }
 
   @Patch(':id')

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
 import { SavingsService } from './savings.service';
 import { CreateSavingsEntryDto, UpdateSavingsEntryDto } from './dto/savings.dto';
+import { ListSavingsQueryDto } from './dto/list-savings-query.dto';
 
 @Controller('savings')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,9 +38,13 @@ export class SavingsController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+  async list(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Query() query: ListSavingsQueryDto,
+  ) {
     const workspaceId = await this.ws(user, req);
-    return this.savingsService.list(workspaceId);
+    return this.savingsService.list(workspaceId, query);
   }
 
   @Post()

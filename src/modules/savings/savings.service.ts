@@ -3,7 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SavingsEntry } from '../../database/entities/savings-entry.entity';
 import { CreateSavingsEntryDto, UpdateSavingsEntryDto } from './dto/savings.dto';
+import {
+  ListSavingsQueryDto,
+  SAVINGS_SORT_FIELDS,
+} from './dto/list-savings-query.dto';
 import { getMonthDateBounds } from '../../common/utils/recurring-period';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 export interface SavingsDashboardSlice {
   savingsInCompetenceMonth: string;
@@ -53,10 +58,16 @@ export class SavingsService {
     return months;
   }
 
-  async list(workspaceId: string): Promise<SavingsEntry[]> {
+  async list(
+    workspaceId: string,
+    query?: ListSavingsQueryDto,
+  ): Promise<SavingsEntry[]> {
     return this.repo.find({
       where: { workspaceId },
-      order: { date: 'DESC', createdAt: 'DESC' },
+      order: resolveFindOrder(query, SAVINGS_SORT_FIELDS, {
+        date: 'DESC',
+        createdAt: 'DESC',
+      }),
     });
   }
 

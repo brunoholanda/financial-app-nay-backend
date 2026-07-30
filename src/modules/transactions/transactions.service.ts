@@ -10,12 +10,13 @@ import {
   CreateTransactionDto,
   UpdateTransactionDto,
 } from './dto/transaction.dto';
-import { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
+import { ListTransactionsQueryDto, TRANSACTION_SORT_FIELDS } from './dto/list-transactions-query.dto';
 import { CategoriesService } from '../categories/categories.service';
 import { RecurringSeriesService } from '../recurring/recurring-series.service';
 import { getMonthDateBounds } from '../../common/utils/recurring-period';
 import { PaymentSource } from '../../common/enums/payment-source.enum';
 import { WorkspaceAccountsService } from '../workspace-accounts/workspace-accounts.service';
+import { applyQueryBuilderOrder } from '../../common/utils/list-sort';
 
 @Injectable()
 export class TransactionsService {
@@ -154,9 +155,7 @@ export class TransactionsService {
       .leftJoinAndSelect('t.workspaceAccount', 'workspaceAccount')
       .where('t.workspaceId = :workspaceId', { workspaceId })
       .andWhere('t.date >= :ds', { ds: start })
-      .andWhere('t.date <= :de', { de: end })
-      .orderBy('t.date', 'DESC')
-      .addOrderBy('t.createdAt', 'DESC');
+      .andWhere('t.date <= :de', { de: end });
 
     if (query.categoryId) {
       qb.andWhere('t.categoryId = :categoryId', {
@@ -173,6 +172,28 @@ export class TransactionsService {
       qb.andWhere('t.workspaceAccountId = :wacc', {
         wacc: query.workspaceAccountId,
       });
+    }
+
+    applyQueryBuilderOrder(
+      qb,
+      't',
+      query,
+      TRANSACTION_SORT_FIELDS,
+      'date',
+      'DESC',
+      {
+        date: 't.date',
+        title: 't.title',
+        amount: 't.amount',
+        type: 't.type',
+        paymentSource: 't.paymentSource',
+        createdAt: 't.createdAt',
+        'category.name': 'category.name',
+        'workspaceAccount.name': 'workspaceAccount.name',
+      },
+    );
+    if (!query.sortBy) {
+      qb.addOrderBy('t.createdAt', 'DESC');
     }
 
     const transactions = await qb.getMany();

@@ -18,6 +18,10 @@ import { UpdateInvestmentDto } from './dto/update-investment.dto';
 import { ListInvestmentsQueryDto } from './dto/list-investments-query.dto';
 import { CreateInvestmentCashflowDto } from './dto/investment-cashflow.dto';
 import { CreateYieldHistoryDto } from './dto/yield-history.dto';
+import {
+  ListInvestmentCashflowsQueryDto,
+  ListYieldHistoryQueryDto,
+} from './dto/list-investment-sub-query.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -136,12 +140,13 @@ export class InvestmentsController {
     @CurrentUser() user: JwtPayload,
     @Req() req: Request,
     @Param('id') id: string,
+    @Query() query: ListInvestmentCashflowsQueryDto,
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
       req.headers as Record<string, string | string[] | undefined>,
     );
-    return this.investmentsService.listCashflows(workspaceId, id);
+    return this.investmentsService.listCashflows(workspaceId, id, query);
   }
 
   @Post(':id/yield-points')
@@ -164,12 +169,13 @@ export class InvestmentsController {
     @CurrentUser() user: JwtPayload,
     @Req() req: Request,
     @Param('id') id: string,
+    @Query() query: ListYieldHistoryQueryDto,
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
       req.headers as Record<string, string | string[] | undefined>,
     );
-    return this.investmentsService.listYieldHistory(workspaceId, id);
+    return this.investmentsService.listYieldHistory(workspaceId, id, query);
   }
 
   @Get(':id/analytics/yield-daily')

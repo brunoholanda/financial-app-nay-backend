@@ -14,12 +14,17 @@ import {
   UpdateRecurringSeriesDto,
 } from './dto/recurring.dto';
 import {
+  ListRecurringQueryDto,
+  RECURRING_SORT_FIELDS,
+} from './dto/list-recurring-query.dto';
+import {
   computeEffectiveSeriesEnd,
   debitDateInCalendarMonth,
   seriesAppliesToMonth,
 } from '../../common/utils/recurring-period';
 import { LedgerType } from '../../common/enums/ledger-type.enum';
 import { PaymentSource } from '../../common/enums/payment-source.enum';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 export interface RecurringMonthItemDto {
   seriesId: string;
@@ -137,11 +142,14 @@ export class RecurringSeriesService {
     return s;
   }
 
-  async listAll(workspaceId: string) {
+  async listAll(workspaceId: string, query?: ListRecurringQueryDto) {
     return this.repo.find({
       where: { workspaceId },
       relations: { category: true, workspaceAccount: true },
-      order: { startDate: 'DESC', createdAt: 'DESC' },
+      order: resolveFindOrder(query, RECURRING_SORT_FIELDS, {
+        startDate: 'DESC',
+        createdAt: 'DESC',
+      }),
     });
   }
 

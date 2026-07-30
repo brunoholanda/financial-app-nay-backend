@@ -6,12 +6,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -36,9 +38,13 @@ export class CategoriesController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload, @Req() req: Request) {
+  async list(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Query() query: ListCategoriesQueryDto,
+  ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(user, req.headers as Record<string, string | string[] | undefined>);
-    return this.categoriesService.list(workspaceId);
+    return this.categoriesService.list(workspaceId, query);
   }
 
   @Patch(':id')

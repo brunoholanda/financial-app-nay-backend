@@ -10,7 +10,12 @@ import {
   CreateWorkspaceInsuranceDto,
   UpdateWorkspaceInsuranceDto,
 } from './dto/workspace-insurance.dto';
+import {
+  INSURANCE_SORT_FIELDS,
+  ListInsurancesQueryDto,
+} from './dto/list-insurances-query.dto';
 import { InsurancePaymentMode } from '../../common/enums/insurance-payment-mode.enum';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 export type InsuranceAlertStatus = 'SOON' | 'EXPIRED';
 
@@ -58,10 +63,16 @@ export class InsurancesService {
     private readonly repo: Repository<WorkspaceInsurance>,
   ) {}
 
-  async list(workspaceId: string): Promise<WorkspaceInsurance[]> {
+  async list(
+    workspaceId: string,
+    query?: ListInsurancesQueryDto,
+  ): Promise<WorkspaceInsurance[]> {
     return this.repo.find({
       where: { workspaceId },
-      order: { validityEnd: 'ASC', createdAt: 'DESC' },
+      order: resolveFindOrder(query, INSURANCE_SORT_FIELDS, {
+        validityEnd: 'ASC',
+        createdAt: 'DESC',
+      }),
     });
   }
 

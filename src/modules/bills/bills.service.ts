@@ -11,10 +11,15 @@ import {
   PayWorkspaceBillDto,
   UpdateWorkspaceBillDto,
 } from './dto/workspace-bill.dto';
+import {
+  BILL_SORT_FIELDS,
+  ListBillsQueryDto,
+} from './dto/list-bills-query.dto';
 import { PaymentSource } from '../../common/enums/payment-source.enum';
 import { LedgerType } from '../../common/enums/ledger-type.enum';
 import { TransactionsService } from '../transactions/transactions.service';
 import { CategoriesService } from '../categories/categories.service';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 export type BillAlertStatus = 'OVERDUE' | 'DUE_TODAY' | 'SOON';
 
@@ -63,10 +68,16 @@ export class BillsService {
     private readonly categoriesService: CategoriesService,
   ) {}
 
-  async list(workspaceId: string): Promise<WorkspaceBill[]> {
+  async list(
+    workspaceId: string,
+    query?: ListBillsQueryDto,
+  ): Promise<WorkspaceBill[]> {
     return this.repo.find({
       where: { workspaceId },
-      order: { dueDate: 'ASC', createdAt: 'DESC' },
+      order: resolveFindOrder(query, BILL_SORT_FIELDS, {
+        dueDate: 'ASC',
+        createdAt: 'DESC',
+      }),
     });
   }
 

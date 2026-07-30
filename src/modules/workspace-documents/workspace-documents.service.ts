@@ -16,8 +16,9 @@ import {
   UpdateWorkspaceDocumentDto,
 } from './dto/workspace-document.dto';
 import type { ListWorkspaceDocumentsQueryDto } from './dto/list-workspace-documents-query.dto';
-
+import { DOCUMENT_SORT_FIELDS } from './dto/list-workspace-documents-query.dto';
 import { WORKSPACE_DOCUMENT_MAX_BYTES } from './workspace-documents.constants';
+import { applyQueryBuilderOrder } from '../../common/utils/list-sort';
 
 const MAX_BYTES = WORKSPACE_DOCUMENT_MAX_BYTES;
 
@@ -110,7 +111,14 @@ export class WorkspaceDocumentsService {
       qb.andWhere('d.createdAt <= :ct', { ct: `${to}T23:59:59.999Z` });
     }
 
-    qb.orderBy('d.createdAt', 'DESC');
+    applyQueryBuilderOrder(
+      qb,
+      'd',
+      query,
+      DOCUMENT_SORT_FIELDS,
+      'createdAt',
+      'DESC',
+    );
     return qb.getMany();
   }
 

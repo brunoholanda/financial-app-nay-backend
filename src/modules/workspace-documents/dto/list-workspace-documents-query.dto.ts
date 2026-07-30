@@ -1,6 +1,25 @@
-import { IsDateString, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { WorkspaceDocumentKind } from '../../../common/enums/workspace-document-kind.enum';
 import { WorkspaceDocumentScope } from '../../../common/enums/workspace-document-scope.enum';
+import { SortOrder } from '../../../common/enums/sort-order.enum';
+
+export const DOCUMENT_SORT_FIELDS = [
+  'kind',
+  'description',
+  'originalFileName',
+  'sizeBytes',
+  'personScope',
+  'createdAt',
+] as const;
+
+export type DocumentSortField = (typeof DOCUMENT_SORT_FIELDS)[number];
 
 export class ListWorkspaceDocumentsQueryDto {
   @IsOptional()
@@ -23,4 +42,12 @@ export class ListWorkspaceDocumentsQueryDto {
   @IsOptional()
   @IsDateString()
   createdTo?: string;
+
+  @IsOptional()
+  @IsIn([...DOCUMENT_SORT_FIELDS])
+  sortBy?: DocumentSortField;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  order?: SortOrder;
 }

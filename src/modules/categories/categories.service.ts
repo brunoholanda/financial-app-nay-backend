@@ -7,6 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../../database/entities/category.entity';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import {
+  CATEGORY_SORT_FIELDS,
+  ListCategoriesQueryDto,
+} from './dto/list-categories-query.dto';
+import { resolveFindOrder } from '../../common/utils/list-sort';
 
 @Injectable()
 export class CategoriesService {
@@ -23,10 +28,12 @@ export class CategoriesService {
     return this.categoryRepo.save(entity);
   }
 
-  list(workspaceId: string) {
+  list(workspaceId: string, query?: ListCategoriesQueryDto) {
     return this.categoryRepo.find({
       where: { workspaceId },
-      order: { name: 'ASC' },
+      order: resolveFindOrder(query, CATEGORY_SORT_FIELDS, {
+        name: 'ASC',
+      }),
     });
   }
 
