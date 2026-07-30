@@ -4,7 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import nodemailer, { Transporter } from 'nodemailer';
+import { createTransport, type Transporter } from 'nodemailer';
 
 export type SendMailInput = {
   to: string | string[];
@@ -52,7 +52,7 @@ export class MailService {
           ? false
           : port === 465;
 
-    this.transporter = nodemailer.createTransport({
+    this.transporter = createTransport({
       host: this.config.getOrThrow<string>('SMTP_HOST'),
       port,
       secure,
