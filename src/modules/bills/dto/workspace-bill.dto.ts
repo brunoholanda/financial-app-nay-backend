@@ -36,6 +36,14 @@ export class CreateWorkspaceBillDto {
   alertDaysBefore?: number;
 
   @IsOptional()
+  @IsBoolean()
+  isRecurring?: boolean;
+
+  @ValidateIf((o: CreateWorkspaceBillDto) => o.isRecurring === true)
+  @IsDateString()
+  recurrenceEndDate?: string;
+
+  @IsOptional()
   @IsString()
   notes?: string | null;
 }
@@ -62,6 +70,18 @@ export class UpdateWorkspaceBillDto {
   @Min(0)
   @Max(365)
   alertDaysBefore?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isRecurring?: boolean;
+
+  @ValidateIf(
+    (o: UpdateWorkspaceBillDto) =>
+      o.isRecurring === true || o.recurrenceEndDate !== undefined,
+  )
+  @IsOptional()
+  @IsDateString()
+  recurrenceEndDate?: string | null;
 
   @IsOptional()
   @IsString()

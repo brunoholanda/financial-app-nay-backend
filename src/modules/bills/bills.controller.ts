@@ -19,6 +19,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
 import { BillsService } from './bills.service';
+import { BillsAlertDigestService } from './bills-alert-digest.service';
 import {
   CreateWorkspaceBillDto,
   PayWorkspaceBillDto,
@@ -31,6 +32,7 @@ import { ListBillsQueryDto } from './dto/list-bills-query.dto';
 export class BillsController {
   constructor(
     private readonly billsService: BillsService,
+    private readonly billsAlertDigest: BillsAlertDigestService,
     private readonly workspaceAccess: WorkspaceAccessService,
   ) {}
 
@@ -55,6 +57,13 @@ export class BillsController {
   async alerts(@CurrentUser() user: JwtPayload, @Req() req: Request) {
     const workspaceId = await this.ws(user, req);
     return this.billsService.getAlerts(workspaceId);
+  }
+
+  /** Dispara agora o digest diário (mesmo e-mail do cron das 8h). */
+  @Post('alerts/email-digest')
+  @Roles(UserRole.MASTER)
+  sendEmailDigest() {
+    return this.billsAlertDigest.runDigest({ force: true });
   }
 
   @Post()

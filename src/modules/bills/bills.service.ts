@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WorkspaceBill } from '../../database/entities/workspace-bill.entity';
+import { Workspace } from '../../database/entities/workspace.entity';
 import {
   CreateWorkspaceBillDto,
   PayWorkspaceBillDto,
@@ -20,6 +21,9 @@ import { LedgerType } from '../../common/enums/ledger-type.enum';
 import { TransactionsService } from '../transactions/transactions.service';
 import { CategoriesService } from '../categories/categories.service';
 import { resolveFindOrder } from '../../common/utils/list-sort';
+import { todayYmdInTimeZone } from '../../common/utils/brazil-date';
+import { UserRole } from '../../common/enums/user-role.enum';
+import { debitDateInCalendarMonth } from '../../common/utils/recurring-period';
 
 export type BillAlertStatus = 'OVERDUE' | 'DUE_TODAY' | 'SOON';
 
@@ -33,13 +37,22 @@ export interface BillAlertItem {
   alertDaysBefore: number;
 }
 
+export interface BillsDigestWorkspace {
+  workspaceId: string;
+  workspaceName: string;
+  masterId: string;
+  masterEmail: string;
+  masterName: string;
+  overdue: BillAlertItem[];
+  dueToday: BillAlertItem[];
+}
+
 function pad2(n: number) {
   return String(n).padStart(2, '0');
 }
 
 function todayLocalYmd(): string {
-  const n = new Date();
-  return `${n.getFullYear()}-${pad2(n.getMonth() + 1)}-${pad2(n.getDate())}`;
+  return todayYmdInTimeZone('America/Sao_Paulo');
 }
 
 function ymdToUtcMs(ymd: string): number {
@@ -64,6 +77,8 @@ export class BillsService {
   constructor(
     @InjectRepository(WorkspaceBill)
     private readonly repo: Repository<WorkspaceBill>,
+    @InjectRepository(Workspace)
+    private readonly workspaceRepo: Repository<Workspace>,
     private readonly transactionsService: TransactionsService,
     private readonly categoriesService: CategoriesService,
   ) {}
@@ -87,17 +102,64 @@ export class BillsService {
     }
   }
 
+  private assertRecurrence(
+    isRecurring: boolean,
+    dueDate: string,
+    recurrenceEndDate: string | null | undefined,
+  ): string | null {
+    if (!isRecurring) return null;
+    const end = recurrenceEndDate?.slice(0, 10);
+    if (!end) {
+      throw new BadRequestException(
+        'Informe a data limite da recorrência.',
+      );
+    }
+    if (end < dueDate.slice(0, 10)) {
+      throw new BadRequestException(
+        'A data limite da recorrência deve ser igual ou posterior ao vencimento.',
+      );
+    }
+    return end;
+  }
+
+  /** Próximo vencimento mensal (mesmo dia do mês, clamped), ou null se passou do limite. */
+  private nextRecurringDueDate(
+    currentDueYmd: string,
+    recurrenceEndYmd: string,
+  ): string | null {
+    const due = currentDueYmd.slice(0, 10);
+    const end = recurrenceEndYmd.slice(0, 10);
+    const [y, m, d] = due.split('-').map(Number);
+    let year = y;
+    let month = m + 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+    const next = debitDateInCalendarMonth(year, month, d);
+    if (next > end) return null;
+    return next;
+  }
+
   async create(
     workspaceId: string,
     dto: CreateWorkspaceBillDto,
   ): Promise<WorkspaceBill> {
     this.assertDueDateOrder(dto.dueDate);
+    const isRecurring = dto.isRecurring === true;
+    const recurrenceEndDate = this.assertRecurrence(
+      isRecurring,
+      dto.dueDate.slice(0, 10),
+      dto.recurrenceEndDate,
+    );
     const row = this.repo.create({
       workspaceId,
       title: dto.title.trim(),
       amount: dto.amount.toFixed(2),
       dueDate: dto.dueDate.slice(0, 10),
       alertDaysBefore: dto.alertDaysBefore ?? 7,
+      isRecurring,
+      recurrenceEndDate,
       isPaid: false,
       paidAt: null,
       paidPaymentSource: null,
@@ -131,6 +193,27 @@ export class BillsService {
       row.alertDaysBefore = dto.alertDaysBefore;
     }
     if (dto.notes !== undefined) row.notes = dto.notes?.trim() || null;
+
+    if (dto.isRecurring !== undefined) {
+      row.isRecurring = dto.isRecurring;
+    }
+    if (dto.isRecurring === false) {
+      row.recurrenceEndDate = null;
+    } else if (dto.recurrenceEndDate !== undefined) {
+      row.recurrenceEndDate = dto.recurrenceEndDate
+        ? dto.recurrenceEndDate.slice(0, 10)
+        : null;
+    }
+
+    if (row.isRecurring) {
+      row.recurrenceEndDate = this.assertRecurrence(
+        true,
+        row.dueDate,
+        row.recurrenceEndDate,
+      );
+    } else {
+      row.recurrenceEndDate = null;
+    }
 
     return this.repo.save(row);
   }
@@ -220,6 +303,58 @@ export class BillsService {
     };
   }
 
+  /**
+   * Contas em aberto vencidas ou que vencem hoje, agrupadas por espaço
+   * do MASTER dono (createdBy). Usado no e-mail diário das 8h.
+   */
+  async getOverdueAndDueTodayDigest(): Promise<{
+    date: string;
+    workspaces: BillsDigestWorkspace[];
+    overdueCount: number;
+    dueTodayCount: number;
+  }> {
+    const today = todayLocalYmd();
+    const workspaces = await this.workspaceRepo.find({
+      relations: ['createdBy'],
+      order: { name: 'ASC' },
+    });
+
+    const result: BillsDigestWorkspace[] = [];
+    let overdueCount = 0;
+    let dueTodayCount = 0;
+
+    for (const ws of workspaces) {
+      const master = ws.createdBy;
+      if (
+        !master ||
+        master.role !== UserRole.MASTER ||
+        !master.isActive ||
+        !master.email?.trim()
+      ) {
+        continue;
+      }
+
+      const alerts = await this.getAlerts(ws.id);
+      const overdue = alerts.items.filter((i) => i.status === 'OVERDUE');
+      const dueToday = alerts.items.filter((i) => i.status === 'DUE_TODAY');
+      if (!overdue.length && !dueToday.length) continue;
+
+      overdueCount += overdue.length;
+      dueTodayCount += dueToday.length;
+      result.push({
+        workspaceId: ws.id,
+        workspaceName: ws.name,
+        masterId: master.id,
+        masterEmail: master.email.trim().toLowerCase(),
+        masterName: master.name,
+        overdue,
+        dueToday,
+      });
+    }
+
+    return { date: today, workspaces: result, overdueCount, dueTodayCount };
+  }
+
   async pay(
     workspaceId: string,
     id: string,
@@ -301,6 +436,45 @@ export class BillsService {
         : null;
     row.linkedTransactionId = linkedTransactionId;
 
-    return this.repo.save(row);
+    const saved = await this.repo.save(row);
+
+    if (saved.isRecurring && saved.recurrenceEndDate) {
+      const nextDue = this.nextRecurringDueDate(
+        saved.dueDate,
+        saved.recurrenceEndDate,
+      );
+      if (nextDue) {
+        const exists = await this.repo.exist({
+          where: {
+            workspaceId,
+            title: saved.title,
+            dueDate: nextDue,
+            isPaid: false,
+            isRecurring: true,
+          },
+        });
+        if (!exists) {
+          await this.repo.save(
+            this.repo.create({
+              workspaceId,
+              title: saved.title,
+              amount: saved.amount,
+              dueDate: nextDue,
+              alertDaysBefore: saved.alertDaysBefore,
+              isRecurring: true,
+              recurrenceEndDate: saved.recurrenceEndDate,
+              isPaid: false,
+              paidAt: null,
+              paidPaymentSource: null,
+              paidWorkspaceAccountId: null,
+              linkedTransactionId: null,
+              notes: saved.notes,
+            }),
+          );
+        }
+      }
+    }
+
+    return saved;
   }
 }

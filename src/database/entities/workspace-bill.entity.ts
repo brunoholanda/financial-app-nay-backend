@@ -42,6 +42,14 @@ export class WorkspaceBill {
   @Column({ type: 'smallint', name: 'alert_days_before', default: 7 })
   alertDaysBefore: number;
 
+  /** Conta mensal recorrente até recurrenceEndDate. */
+  @Column({ name: 'is_recurring', default: false })
+  isRecurring: boolean;
+
+  /** Última data de vencimento permitida na série (inclusive). */
+  @Column({ type: 'date', name: 'recurrence_end_date', nullable: true })
+  recurrenceEndDate: string | null;
+
   @Column({ name: 'is_paid', default: false })
   isPaid: boolean;
 
