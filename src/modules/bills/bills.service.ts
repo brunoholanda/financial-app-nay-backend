@@ -329,7 +329,8 @@ export class BillsService {
         !master ||
         master.role !== UserRole.MASTER ||
         !master.isActive ||
-        !master.email?.trim()
+        !master.email?.trim() ||
+        master.emailNotifyBills === false
       ) {
         continue;
       }

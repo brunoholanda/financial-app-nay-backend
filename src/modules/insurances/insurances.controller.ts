@@ -19,6 +19,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
 import { InsurancesService } from './insurances.service';
+import { InsurancesAlertDigestService } from './insurances-alert-digest.service';
 import {
   CreateWorkspaceInsuranceDto,
   UpdateWorkspaceInsuranceDto,
@@ -30,6 +31,7 @@ import { ListInsurancesQueryDto } from './dto/list-insurances-query.dto';
 export class InsurancesController {
   constructor(
     private readonly insurancesService: InsurancesService,
+    private readonly insurancesAlertDigest: InsurancesAlertDigestService,
     private readonly workspaceAccess: WorkspaceAccessService,
   ) {}
 
@@ -54,6 +56,13 @@ export class InsurancesController {
   async alerts(@CurrentUser() user: JwtPayload, @Req() req: Request) {
     const workspaceId = await this.ws(user, req);
     return this.insurancesService.getAlerts(workspaceId);
+  }
+
+  /** Dispara agora o digest diário de seguros (mesmo e-mail do cron das 8h). */
+  @Post('alerts/email-digest')
+  @Roles(UserRole.MASTER)
+  sendEmailDigest() {
+    return this.insurancesAlertDigest.runDigest({ force: true });
   }
 
   @Post()

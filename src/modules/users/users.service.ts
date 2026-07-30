@@ -30,6 +30,44 @@ export class UsersService {
     return this.userRepo.findOne({ where: { email: email.toLowerCase() } });
   }
 
+  findById(id: string): Promise<User | null> {
+    return this.userRepo.findOne({ where: { id } });
+  }
+
+  toPublicProfile(user: User) {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      workspaceId: user.workspaceId,
+      isActive: user.isActive,
+      emailNotifyBills: user.emailNotifyBills !== false,
+      emailNotifyInsurances: user.emailNotifyInsurances !== false,
+    };
+  }
+
+  async updateNotificationPrefs(
+    userId: string,
+    prefs: {
+      emailNotifyBills?: boolean;
+      emailNotifyInsurances?: boolean;
+    },
+  ) {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    if (prefs.emailNotifyBills !== undefined) {
+      user.emailNotifyBills = prefs.emailNotifyBills;
+    }
+    if (prefs.emailNotifyInsurances !== undefined) {
+      user.emailNotifyInsurances = prefs.emailNotifyInsurances;
+    }
+    const saved = await this.userRepo.save(user);
+    return this.toPublicProfile(saved);
+  }
+
   async createClient(masterId: string, dto: CreateClientUserDto) {
     const workspace = await this.workspaceRepo.findOne({
       where: { id: dto.workspaceId, createdById: masterId },

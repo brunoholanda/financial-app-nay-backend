@@ -42,14 +42,25 @@ export class AuthService {
     const access_token = await this.jwtService.signAsync(payload);
     return {
       access_token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        workspaceId: user.workspaceId,
-        isActive: user.isActive,
-      },
+      user: this.usersService.toPublicProfile(user),
     };
+  }
+
+  async getMe(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Conta inativa ou inexistente');
+    }
+    return this.usersService.toPublicProfile(user);
+  }
+
+  async updateNotificationPrefs(
+    userId: string,
+    prefs: {
+      emailNotifyBills?: boolean;
+      emailNotifyInsurances?: boolean;
+    },
+  ) {
+    return this.usersService.updateNotificationPrefs(userId, prefs);
   }
 }

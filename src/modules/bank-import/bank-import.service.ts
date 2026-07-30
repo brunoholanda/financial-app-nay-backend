@@ -10,6 +10,7 @@ import { LedgerType } from '../../common/enums/ledger-type.enum';
 import { CategoriesService } from '../categories/categories.service';
 import { WorkspaceAccountsService } from '../workspace-accounts/workspace-accounts.service';
 import { parseOfxBuffer } from './ofx-parser';
+import { parseCsvBuffer } from './csv-parser';
 import type { ConfirmOfxImportDto } from './dto/confirm-ofx-import.dto';
 
 export type MemoryUploadedFile = {
@@ -19,8 +20,7 @@ export type MemoryUploadedFile = {
   buffer: Buffer;
 };
 
-const OFX_MAX_BYTES = 2 * 1024 * 1024;
-const OFX_EXT = new Set(['.ofx', '.qfx']);
+const IMPORT_MAX_BYTES = 2 * 1024 * 1024;
 
 @Injectable()
 export class BankImportService {
@@ -31,19 +31,30 @@ export class BankImportService {
     private readonly workspaceAccounts: WorkspaceAccountsService,
   ) {}
 
-  private assertOfxFile(file: MemoryUploadedFile) {
+  private assertImportFile(file: MemoryUploadedFile): '.ofx' | '.qfx' | '.csv' {
     if (!file?.buffer?.length) {
       throw new BadRequestException('Envie um arquivo no campo «file».');
     }
-    if (file.size > OFX_MAX_BYTES) {
-      throw new BadRequestException('Arquivo OFX excede 2 MB.');
+    if (file.size > IMPORT_MAX_BYTES) {
+      throw new BadRequestException('Arquivo excede 2 MB.');
     }
     const name = (file.originalname || '').toLowerCase();
     const dot = name.lastIndexOf('.');
     const ext = dot >= 0 ? name.slice(dot) : '';
-    if (!OFX_EXT.has(ext)) {
-      throw new BadRequestException('Envie um arquivo .ofx ou .qfx.');
+    if (ext === '.ofx' || ext === '.qfx' || ext === '.csv') {
+      return ext;
     }
+    throw new BadRequestException(
+      'Envie um arquivo .ofx, .qfx ou .csv.',
+    );
+  }
+
+  private parseFile(file: MemoryUploadedFile) {
+    const ext = this.assertImportFile(file);
+    if (ext === '.csv') {
+      return parseCsvBuffer(file.buffer);
+    }
+    return parseOfxBuffer(file.buffer);
   }
 
   private async existingFitIds(
@@ -77,12 +88,11 @@ export class BankImportService {
     workspaceAccountId: string,
     file: MemoryUploadedFile,
   ) {
-    this.assertOfxFile(file);
     await this.workspaceAccounts.assertAccountInWorkspace(
       workspaceId,
       workspaceAccountId,
     );
-    const parsed = parseOfxBuffer(file.buffer);
+    const parsed = this.parseFile(file);
     const existing = await this.existingFitIds(
       workspaceId,
       workspaceAccountId,

@@ -38,6 +38,14 @@ export class User {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  /** E-mail diário de contas vencidas / que vencem hoje. */
+  @Column({ name: 'email_notify_bills', default: true })
+  emailNotifyBills: boolean;
+
+  /** E-mail diário de seguros vencidos / a vencer. */
+  @Column({ name: 'email_notify_insurances', default: true })
+  emailNotifyInsurances: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

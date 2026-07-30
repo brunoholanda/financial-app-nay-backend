@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WorkspaceInsurance } from '../../database/entities/workspace-insurance.entity';
+import { Workspace } from '../../database/entities/workspace.entity';
 import {
   CreateWorkspaceInsuranceDto,
   UpdateWorkspaceInsuranceDto,
@@ -16,6 +17,8 @@ import {
 } from './dto/list-insurances-query.dto';
 import { InsurancePaymentMode } from '../../common/enums/insurance-payment-mode.enum';
 import { resolveFindOrder } from '../../common/utils/list-sort';
+import { todayYmdInTimeZone } from '../../common/utils/brazil-date';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 export type InsuranceAlertStatus = 'SOON' | 'EXPIRED';
 
@@ -29,13 +32,22 @@ export interface InsuranceAlertItem {
   alertDaysBefore: number;
 }
 
+export interface InsurancesDigestWorkspace {
+  workspaceId: string;
+  workspaceName: string;
+  masterId: string;
+  masterEmail: string;
+  masterName: string;
+  expired: InsuranceAlertItem[];
+  soon: InsuranceAlertItem[];
+}
+
 function pad2(n: number) {
   return String(n).padStart(2, '0');
 }
 
 function todayLocalYmd(): string {
-  const n = new Date();
-  return `${n.getFullYear()}-${pad2(n.getMonth() + 1)}-${pad2(n.getDate())}`;
+  return todayYmdInTimeZone('America/Sao_Paulo');
 }
 
 function ymdToUtcMs(ymd: string): number {
@@ -61,6 +73,8 @@ export class InsurancesService {
   constructor(
     @InjectRepository(WorkspaceInsurance)
     private readonly repo: Repository<WorkspaceInsurance>,
+    @InjectRepository(Workspace)
+    private readonly workspaceRepo: Repository<Workspace>,
   ) {}
 
   async list(
@@ -269,5 +283,57 @@ export class InsurancesService {
     const expiredCount = items.filter((i) => i.status === 'EXPIRED').length;
     const soonCount = items.filter((i) => i.status === 'SOON').length;
     return { items, expiredCount, soonCount, total: items.length };
+  }
+
+  /**
+   * Para o e-mail diário: vigências vencidas + dentro da janela de alerta (mesmo critério do sino).
+   */
+  async getExpiredAndSoonDigest(): Promise<{
+    date: string;
+    workspaces: InsurancesDigestWorkspace[];
+    expiredCount: number;
+    soonCount: number;
+  }> {
+    const today = todayLocalYmd();
+    const workspaces = await this.workspaceRepo.find({
+      relations: ['createdBy'],
+      order: { name: 'ASC' },
+    });
+
+    const result: InsurancesDigestWorkspace[] = [];
+    let expiredCount = 0;
+    let soonCount = 0;
+
+    for (const ws of workspaces) {
+      const master = ws.createdBy;
+      if (
+        !master ||
+        master.role !== UserRole.MASTER ||
+        !master.isActive ||
+        !master.email?.trim() ||
+        master.emailNotifyInsurances === false
+      ) {
+        continue;
+      }
+
+      const alerts = await this.getAlerts(ws.id);
+      const expired = alerts.items.filter((i) => i.status === 'EXPIRED');
+      const soon = alerts.items.filter((i) => i.status === 'SOON');
+      if (!expired.length && !soon.length) continue;
+
+      expiredCount += expired.length;
+      soonCount += soon.length;
+      result.push({
+        workspaceId: ws.id,
+        workspaceName: ws.name,
+        masterId: master.id,
+        masterEmail: master.email.trim().toLowerCase(),
+        masterName: master.name,
+        expired,
+        soon,
+      });
+    }
+
+    return { date: today, workspaces: result, expiredCount, soonCount };
   }
 }
