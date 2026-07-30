@@ -28,11 +28,13 @@ import { SavingsModule } from './modules/savings/savings.module';
 import { WorkspaceDocumentsModule } from './modules/workspace-documents/workspace-documents.module';
 import { InsurancesModule } from './modules/insurances/insurances.module';
 import { BillsModule } from './modules/bills/bills.module';
+import { MailModule } from './modules/mail/mail.module';
 import { SeedService } from './database/seed.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    MailModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
