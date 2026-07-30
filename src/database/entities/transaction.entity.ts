@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -14,6 +15,10 @@ import { Workspace } from './workspace.entity';
 import { WorkspaceAccount } from './workspace-account.entity';
 
 @Entity('transactions')
+@Index('uq_transactions_ws_account_fitid', ['workspaceId', 'workspaceAccountId', 'bankFitId'], {
+  unique: true,
+  where: '"bank_fit_id" IS NOT NULL',
+})
 export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -61,6 +66,10 @@ export class Transaction {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  /** FITID do extrato OFX — deduplica reimportações na mesma conta. */
+  @Column({ type: 'varchar', length: 128, name: 'bank_fit_id', nullable: true })
+  bankFitId: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

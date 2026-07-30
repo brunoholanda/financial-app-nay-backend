@@ -29,6 +29,7 @@ import { SavingsModule } from './modules/savings/savings.module';
 import { WorkspaceDocumentsModule } from './modules/workspace-documents/workspace-documents.module';
 import { InsurancesModule } from './modules/insurances/insurances.module';
 import { BillsModule } from './modules/bills/bills.module';
+import { BankImportModule } from './modules/bank-import/bank-import.module';
 import { MailModule } from './modules/mail/mail.module';
 import { SeedService } from './database/seed.service';
 
@@ -81,6 +82,7 @@ import { SeedService } from './database/seed.service';
     WorkspaceDocumentsModule,
     InsurancesModule,
     BillsModule,
+    BankImportModule,
   ],
   providers: [SeedService],
 })
