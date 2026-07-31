@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -39,12 +40,15 @@ export class TicketsController {
     return this.tickets.getForUser(user.sub, id);
   }
 
+  /** Cada chamado novo dispara e-mail para a gestão: limite conservador. */
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 600_000 } })
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateTicketDto) {
     return this.tickets.createForUser(user, dto);
   }
 
   @Post(':id/messages')
+  @Throttle({ default: { limit: 30, ttl: 600_000 } })
   reply(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,

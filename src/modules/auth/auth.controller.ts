@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -21,25 +22,32 @@ import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  /** Cadastro público com teste grátis: entra logado direto. */
+  /**
+   * Cadastro público com teste grátis: entra logado direto. Limite baixo porque
+   * cada chamada cria conta e dispara e-mail de boas-vindas.
+   */
   @Post('signup')
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
   signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }
 
   /** Etapa 1: valida a senha e envia o código de verificação por e-mail. */
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   login(@Body() dto: LoginDto, @Ip() ip: string) {
     return this.authService.login(dto.email, dto.password, ip);
   }
 
   /** Etapa 2: confirma o código e devolve o token de acesso. */
   @Post('login/verify')
+  @Throttle({ default: { limit: 12, ttl: 60_000 } })
   verifyLogin(@Body() dto: VerifyLoginDto) {
     return this.authService.verifyLogin(dto.challengeId, dto.code);
   }
 
   @Post('login/resend')
+  @Throttle({ default: { limit: 4, ttl: 60_000 } })
   resendLoginCode(@Body() dto: ResendLoginCodeDto, @Ip() ip: string) {
     return this.authService.resendLoginCode(dto.challengeId, ip);
   }

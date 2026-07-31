@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { BillingService } from './billing.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -33,8 +34,10 @@ export class BillingController {
     return this.billingService.getStatus(user);
   }
 
+  /** Cada chamada abre uma sessão no Stripe: limite acima do uso normal. */
   @Post('checkout')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 12, ttl: 600_000 } })
   checkout(@CurrentUser() user: JwtPayload, @Body() dto: CheckoutDto) {
     return this.billingService.createCheckoutSession(
       user,
@@ -51,6 +54,7 @@ export class BillingController {
 
   @Post('portal')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 12, ttl: 600_000 } })
   portal(@CurrentUser() user: JwtPayload) {
     return this.billingService.createPortalSession(user);
   }
@@ -58,6 +62,7 @@ export class BillingController {
   /** Reconsulta o Stripe (retorno do checkout, antes do webhook chegar). */
   @Post('sync')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   sync(@CurrentUser() user: JwtPayload) {
     return this.billingService.syncFromStripe(user);
   }

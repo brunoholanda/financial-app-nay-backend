@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -29,9 +30,31 @@ function parseCorsOrigins(raw: string | undefined): string[] {
   return list.length > 0 ? [...new Set(list)] : DEFAULT_CORS_ORIGINS;
 }
 
+/**
+ * Quantos proxies à frente do backend podem ser confiados no X-Forwarded-For.
+ * Aceita número de saltos (`1`), lista de IPs/faixas ou apelidos do Express
+ * (`loopback`). Sem isso o rate limit contaria o IP do proxy, e com `true`
+ * qualquer cliente poderia forjar o cabeçalho e escapar do limite.
+ */
+function parseTrustProxy(raw: string | undefined): number | string | undefined {
+  const value = raw?.trim();
+  if (!value || value === 'false') return undefined;
+  // `true` cru aceitaria X-Forwarded-For forjado; um salto cobre o caso comum.
+  if (value === 'true') return 1;
+  const hops = Number(value);
+  return Number.isInteger(hops) && hops >= 0 ? hops : value;
+}
+
 async function bootstrap() {
   // rawBody é necessário para validar a assinatura do webhook do Stripe.
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
+  const trustProxy = parseTrustProxy(process.env.TRUST_PROXY);
+  if (trustProxy !== undefined) {
+    app.set('trust proxy', trustProxy);
+    new Logger('Bootstrap').log(`trust proxy: ${String(trustProxy)}`);
+  }
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

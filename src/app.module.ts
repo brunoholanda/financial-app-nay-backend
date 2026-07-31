@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './database/entities/user.entity';
 import { LoginChallenge } from './database/entities/login-challenge.entity';
@@ -39,12 +40,19 @@ import { BillingModule } from './modules/billing/billing.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { ManagerModule } from './modules/manager/manager.module';
 import { SubscriptionInterceptor } from './common/interceptors/subscription.interceptor';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
+import { rateLimitOptions } from './common/rate-limit.options';
 import { SeedService } from './database/seed.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: rateLimitOptions,
+    }),
     MailModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -100,6 +108,7 @@ import { SeedService } from './database/seed.service';
   ],
   providers: [
     SeedService,
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: SubscriptionInterceptor },
   ],
 })

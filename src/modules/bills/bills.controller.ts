@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -59,6 +60,7 @@ export class BillsController {
   /** Dispara agora o digest diário (mesmo e-mail do cron das 8h). */
   @Post('alerts/email-digest')
   @Roles(UserRole.MASTER)
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
   sendEmailDigest() {
     return this.billsAlertDigest.runDigest({ force: true });
   }

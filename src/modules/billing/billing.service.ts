@@ -448,18 +448,28 @@ export class BillingService {
     const customer = await this.ensureCustomer(user);
     const appUrl = this.appUrl();
 
-    const session = await this.stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer,
-      line_items: [this.lineItem(tier)],
-      locale: 'pt-BR',
-      allow_promotion_codes: true,
-      client_reference_id: user.id,
-      metadata: { userId: user.id, planTier: tier },
-      subscription_data: { metadata: { userId: user.id, planTier: tier } },
-      success_url: `${appUrl}/assinatura?status=sucesso`,
-      cancel_url: `${appUrl}/assinatura?status=cancelado`,
-    });
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await this.stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer,
+        payment_method_types: this.paymentMethodTypes(),
+        line_items: [this.lineItem(tier)],
+        locale: 'pt-BR',
+        allow_promotion_codes: true,
+        client_reference_id: user.id,
+        metadata: { userId: user.id, planTier: tier },
+        subscription_data: { metadata: { userId: user.id, planTier: tier } },
+        success_url: `${appUrl}/assinatura?status=sucesso`,
+        cancel_url: `${appUrl}/assinatura?status=cancelado`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Falha ao abrir o checkout no Stripe: ${message}`);
+      throw new ServiceUnavailableException(
+        'Não foi possível abrir o pagamento. Verifique a configuração da conta no Stripe e tente novamente.',
+      );
+    }
 
     if (!session.url) {
       throw new ServiceUnavailableException(
@@ -467,6 +477,22 @@ export class BillingService {
       );
     }
     return session.url;
+  }
+
+  /**
+   * Sem isso o Stripe usa os meios de pagamento dinâmicos do painel e recusa a
+   * sessão quando nenhum deles aceita a moeda ("No valid payment method types
+   * for this Checkout Session"). Cartão é o único que cobre assinatura mensal em
+   * BRL; para aceitar outros, liste em STRIPE_PAYMENT_METHOD_TYPES.
+   */
+  private paymentMethodTypes(): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
+    const configured = (
+      this.config.get<string>('STRIPE_PAYMENT_METHOD_TYPES') ?? ''
+    )
+      .split(/[,;]+/g)
+      .map((type) => type.trim().toLowerCase())
+      .filter(Boolean);
+    return configured.length ? configured : ['card'];
   }
 
   private lineItem(

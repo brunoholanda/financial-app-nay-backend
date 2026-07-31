@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -20,6 +21,7 @@ export class MailController {
   }
 
   @Post('test')
+  @Throttle({ default: { limit: 5, ttl: 600_000 } })
   async sendTest(@Body() dto: SendTestMailDto) {
     await this.mailService.verifyConnection();
     const subject = dto.subject?.trim() || 'Teste SMTP — App Financeiro';
