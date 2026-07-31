@@ -30,7 +30,8 @@ function parseCorsOrigins(raw: string | undefined): string[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody é necessário para validar a assinatura do webhook do Stripe.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

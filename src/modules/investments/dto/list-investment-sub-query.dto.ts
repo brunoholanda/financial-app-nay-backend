@@ -28,8 +28,7 @@ export const YIELD_HISTORY_SORT_FIELDS = [
   'createdAt',
 ] as const;
 
-export type YieldHistorySortField =
-  (typeof YIELD_HISTORY_SORT_FIELDS)[number];
+export type YieldHistorySortField = (typeof YIELD_HISTORY_SORT_FIELDS)[number];
 
 export class ListYieldHistoryQueryDto {
   @IsOptional()

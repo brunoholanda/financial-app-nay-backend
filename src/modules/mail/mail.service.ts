@@ -23,9 +23,9 @@ export class MailService {
   isConfigured(): boolean {
     return Boolean(
       this.config.get<string>('SMTP_HOST')?.trim() &&
-        this.config.get<string>('SMTP_USER')?.trim() &&
-        this.config.get<string>('SMTP_PASS') &&
-        this.config.get<string>('MAIL_FROM')?.trim(),
+      this.config.get<string>('SMTP_USER')?.trim() &&
+      this.config.get<string>('SMTP_PASS') &&
+      this.config.get<string>('MAIL_FROM')?.trim(),
     );
   }
 

@@ -93,7 +93,9 @@ function ensureClosedStmtTrn(text: string): string {
   let out = parts[0];
   for (let i = 1; i < parts.length; i++) {
     const chunk = parts[i];
-    const cut = chunk.search(/<STMTTRN>|<LEDGERBAL>|<BANKTRANLIST>|<\/BANKTRANLIST>/i);
+    const cut = chunk.search(
+      /<STMTTRN>|<LEDGERBAL>|<BANKTRANLIST>|<\/BANKTRANLIST>/i,
+    );
     const body = cut >= 0 ? chunk.slice(0, cut) : chunk;
     const rest = cut >= 0 ? chunk.slice(cut) : '';
     out += `<STMTTRN>${body}</STMTTRN>${rest}`;
@@ -171,6 +173,8 @@ export function parseOfxBuffer(buffer: Buffer): ParsedOfxTransaction[] {
     );
   }
 
-  rows.sort((a, b) => a.date.localeCompare(b.date) || a.fitId.localeCompare(b.fitId));
+  rows.sort(
+    (a, b) => a.date.localeCompare(b.date) || a.fitId.localeCompare(b.fitId),
+  );
   return rows;
 }

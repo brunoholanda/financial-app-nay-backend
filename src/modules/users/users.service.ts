@@ -16,6 +16,7 @@ import {
 } from './dto/list-users-query.dto';
 import { Workspace } from '../../database/entities/workspace.entity';
 import { resolveFindOrder } from '../../common/utils/list-sort';
+import { SubscriptionAccessService } from '../../common/services/subscription-access.service';
 
 @Injectable()
 export class UsersService {
@@ -24,6 +25,7 @@ export class UsersService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Workspace)
     private readonly workspaceRepo: Repository<Workspace>,
+    private readonly subscriptionAccess: SubscriptionAccessService,
   ) {}
 
   findByEmailWithPassword(email: string): Promise<User | null> {
@@ -42,6 +44,7 @@ export class UsersService {
       role: user.role,
       workspaceId: user.workspaceId,
       isActive: user.isActive,
+      isManager: user.isManager === true,
       emailNotifyBills: user.emailNotifyBills !== false,
       emailNotifyInsurances: user.emailNotifyInsurances !== false,
     };
@@ -66,6 +69,53 @@ export class UsersService {
     }
     const saved = await this.userRepo.save(user);
     return this.toPublicProfile(saved);
+  }
+
+  /**
+   * Cadastro público: cria o MASTER com o teste grátis já iniciado e o primeiro
+   * espaço de trabalho na mesma transação.
+   */
+  async createMasterAccount(input: {
+    name: string;
+    email: string;
+    password: string;
+    workspaceName: string;
+    businessType?: string;
+  }): Promise<{ user: User; workspace: Workspace }> {
+    const email = input.email.toLowerCase().trim();
+    const exists = await this.userRepo.exist({ where: { email } });
+    if (exists) {
+      throw new ConflictException('Este e-mail já está cadastrado.');
+    }
+    const hashed = await bcrypt.hash(input.password, 10);
+
+    return this.userRepo.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      const workspaces = manager.getRepository(Workspace);
+
+      const user = this.subscriptionAccess.applyTrial(
+        users.create({
+          name: input.name.trim(),
+          email,
+          password: hashed,
+          role: UserRole.MASTER,
+          workspaceId: null,
+          isActive: true,
+          licenseExempt: false,
+        }),
+      );
+      const savedUser = await users.save(user);
+
+      const workspace = await workspaces.save(
+        workspaces.create({
+          name: input.workspaceName.trim(),
+          businessType: input.businessType?.trim() || 'Geral',
+          createdById: savedUser.id,
+        }),
+      );
+
+      return { user: savedUser, workspace };
+    });
   }
 
   async createClient(masterId: string, dto: CreateClientUserDto) {
@@ -149,7 +199,9 @@ export class UsersService {
       },
     });
     if (!u) {
-      throw new NotFoundException('Usuário cliente não encontrado neste espaço');
+      throw new NotFoundException(
+        'Usuário cliente não encontrado neste espaço',
+      );
     }
     u.isActive = isActive;
     await this.userRepo.save(u);

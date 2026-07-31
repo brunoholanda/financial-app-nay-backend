@@ -10,7 +10,10 @@ import { InvestmentTransaction } from '../../database/entities/investment-transa
 import { YieldHistory } from '../../database/entities/yield-history.entity';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
 import { UpdateInvestmentDto } from './dto/update-investment.dto';
-import { ListInvestmentsQueryDto, INVESTMENT_SORT_FIELDS } from './dto/list-investments-query.dto';
+import {
+  ListInvestmentsQueryDto,
+  INVESTMENT_SORT_FIELDS,
+} from './dto/list-investments-query.dto';
 import {
   INVESTMENT_CASHFLOW_SORT_FIELDS,
   ListInvestmentCashflowsQueryDto,
@@ -53,7 +56,9 @@ export class InvestmentsService {
       !Number.isFinite(dto.investedAmount) ||
       !Number.isFinite(dto.currentAmount)
     ) {
-      throw new BadRequestException('Valores monetários devem ser finitos e ≥ 0');
+      throw new BadRequestException(
+        'Valores monetários devem ser finitos e ≥ 0',
+      );
     }
 
     const row = this.invRepo.create({

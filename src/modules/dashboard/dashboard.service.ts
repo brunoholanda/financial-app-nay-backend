@@ -36,11 +36,7 @@ export class DashboardService {
     return { year: d.getFullYear(), month: d.getMonth() + 1 };
   }
 
-  async summary(
-    workspaceId: string,
-    year?: number,
-    month?: number,
-  ) {
+  async summary(workspaceId: string, year?: number, month?: number) {
     const ym = this.resolveYearMonth(year, month);
     const { start, end } = getMonthDateBounds(ym.year, ym.month);
 
@@ -139,9 +135,7 @@ export class DashboardService {
         type: v.type,
         total: v.total.toFixed(2),
       }))
-      .sort((a, b) =>
-        a.categoryName.localeCompare(b.categoryName, 'pt-BR'),
-      );
+      .sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'pt-BR'));
 
     const savingsSlice = await this.savingsService.getDashboardSlice(
       workspaceId,

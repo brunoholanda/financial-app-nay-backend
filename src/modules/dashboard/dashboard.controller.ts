@@ -24,12 +24,8 @@ export class DashboardController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
-    return this.dashboardService.summary(
-      workspaceId,
-      q.year,
-      q.month,
-    );
+    return this.dashboardService.summary(workspaceId, q.year, q.month);
   }
 }

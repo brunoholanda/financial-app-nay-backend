@@ -15,10 +15,14 @@ import { Workspace } from './workspace.entity';
 import { WorkspaceAccount } from './workspace-account.entity';
 
 @Entity('transactions')
-@Index('uq_transactions_ws_account_fitid', ['workspaceId', 'workspaceAccountId', 'bankFitId'], {
-  unique: true,
-  where: '"bank_fit_id" IS NOT NULL',
-})
+@Index(
+  'uq_transactions_ws_account_fitid',
+  ['workspaceId', 'workspaceAccountId', 'bankFitId'],
+  {
+    unique: true,
+    where: '"bank_fit_id" IS NOT NULL',
+  },
+)
 export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;

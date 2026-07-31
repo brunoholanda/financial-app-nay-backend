@@ -48,9 +48,7 @@ export class UsersController {
     const workspaceId =
       typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : undefined;
     if (!workspaceId) {
-      throw new BadRequestException(
-        `Header ${WORKSPACE_HEADER} is required`,
-      );
+      throw new BadRequestException(`Header ${WORKSPACE_HEADER} is required`);
     }
     return this.usersService.listByWorkspace(master.sub, workspaceId, query);
   }
@@ -67,9 +65,7 @@ export class UsersController {
     const workspaceId =
       typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : undefined;
     if (!workspaceId) {
-      throw new BadRequestException(
-        `Header ${WORKSPACE_HEADER} is required`,
-      );
+      throw new BadRequestException(`Header ${WORKSPACE_HEADER} is required`);
     }
     return this.usersService.setClientActive(
       master.sub,

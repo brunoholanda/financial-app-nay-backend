@@ -96,7 +96,9 @@ export class PayWorkspaceBillDto {
   @IsIn([PaymentSource.CASH, PaymentSource.CREDIT_CARD])
   paymentSource: PaymentSource;
 
-  @ValidateIf((o: PayWorkspaceBillDto) => o.paymentSource === PaymentSource.CREDIT_CARD)
+  @ValidateIf(
+    (o: PayWorkspaceBillDto) => o.paymentSource === PaymentSource.CREDIT_CARD,
+  )
   @IsUUID()
   workspaceAccountId?: string;
 

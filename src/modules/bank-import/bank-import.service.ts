@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Transaction } from '../../database/entities/transaction.entity';
@@ -44,9 +41,7 @@ export class BankImportService {
     if (ext === '.ofx' || ext === '.qfx' || ext === '.csv') {
       return ext;
     }
-    throw new BadRequestException(
-      'Envie um arquivo .ofx, .qfx ou .csv.',
-    );
+    throw new BadRequestException('Envie um arquivo .ofx, .qfx ou .csv.');
   }
 
   private parseFile(file: MemoryUploadedFile) {
@@ -131,10 +126,7 @@ export class BankImportService {
     const errors: { fitId: string; message: string }[] = [];
 
     // Validate categories once per unique id
-    const categoryCache = new Map<
-      string,
-      { id: string; type: LedgerType }
-    >();
+    const categoryCache = new Map<string, { id: string; type: LedgerType }>();
 
     for (const item of dto.items) {
       if (existing.has(item.fitId)) {

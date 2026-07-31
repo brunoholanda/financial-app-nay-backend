@@ -24,10 +24,7 @@ export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Post()
-  create(
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateWorkspaceDto,
-  ) {
+  create(@CurrentUser() user: JwtPayload, @Body() dto: CreateWorkspaceDto) {
     return this.workspacesService.create(user.sub, dto);
   }
 

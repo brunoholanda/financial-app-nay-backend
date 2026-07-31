@@ -106,11 +106,7 @@ export class RecurringSeriesService {
 
   async create(workspaceId: string, dto: CreateRecurringSeriesDto) {
     this.assertDateOrder(dto.startDate, dto.endDate);
-    await this.assertCategoryMatchesType(
-      workspaceId,
-      dto.categoryId,
-      dto.type,
-    );
+    await this.assertCategoryMatchesType(workspaceId, dto.categoryId, dto.type);
     const pay = await this.enforcePaymentTarget(
       workspaceId,
       dto.paymentSource,
@@ -160,11 +156,7 @@ export class RecurringSeriesService {
     });
   }
 
-  async update(
-    workspaceId: string,
-    id: string,
-    dto: UpdateRecurringSeriesDto,
-  ) {
+  async update(workspaceId: string, id: string, dto: UpdateRecurringSeriesDto) {
     const s = await this.repo.findOne({ where: { id, workspaceId } });
     if (!s) throw new NotFoundException('Série recorrente não encontrada');
     if (s.cancelledAt) {
@@ -202,7 +194,8 @@ export class RecurringSeriesService {
     if (dto.categoryId !== undefined) s.categoryId = dto.categoryId;
     if (dto.startDate !== undefined) s.startDate = dto.startDate.slice(0, 10);
     if (dto.endDate !== undefined) s.endDate = dto.endDate.slice(0, 10);
-    if (dto.debitDayOfMonth !== undefined) s.debitDayOfMonth = dto.debitDayOfMonth;
+    if (dto.debitDayOfMonth !== undefined)
+      s.debitDayOfMonth = dto.debitDayOfMonth;
     if (dto.description !== undefined) {
       s.description = dto.description?.trim() ?? null;
     }

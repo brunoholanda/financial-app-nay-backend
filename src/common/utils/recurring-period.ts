@@ -48,7 +48,10 @@ export function debitDateInCalendarMonth(
   debitDayOfMonth: number,
 ): string {
   const lastDay = new Date(year, month, 0).getDate();
-  const clampedDay = Math.min(Math.max(1, Math.floor(debitDayOfMonth)), lastDay);
+  const clampedDay = Math.min(
+    Math.max(1, Math.floor(debitDayOfMonth)),
+    lastDay,
+  );
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${year}-${pad(month)}-${pad(clampedDay)}`;
 }

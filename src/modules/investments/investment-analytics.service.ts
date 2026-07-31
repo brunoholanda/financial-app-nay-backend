@@ -48,7 +48,12 @@ export class InvestmentAnalyticsService {
     let sumCur = 0;
     const byAccountMap = new Map<
       string,
-      { accountId: string; accountName: string; invested: number; current: number }
+      {
+        accountId: string;
+        accountName: string;
+        invested: number;
+        current: number;
+      }
     >();
     const byCategoryMap = new Map<
       InvestmentPortfolioCategory,
@@ -67,24 +72,28 @@ export class InvestmentAnalyticsService {
 
       const accId = i.workspaceAccountId;
       const accName = i.workspaceAccount?.name ?? 'Conta';
-      const prevA =
-        byAccountMap.get(accId) ?? {
-          accountId: accId,
-          accountName: accName,
-          invested: 0,
-          current: 0,
-        };
+      const prevA = byAccountMap.get(accId) ?? {
+        accountId: accId,
+        accountName: accName,
+        invested: 0,
+        current: 0,
+      };
       prevA.invested += inv;
       prevA.current += cur;
       byAccountMap.set(accId, prevA);
 
-      const prevC = byCategoryMap.get(i.category) ?? { invested: 0, current: 0 };
+      const prevC = byCategoryMap.get(i.category) ?? {
+        invested: 0,
+        current: 0,
+      };
       prevC.invested += inv;
       prevC.current += cur;
       byCategoryMap.set(i.category, prevC);
 
-      const prevT =
-        byTypeMap.get(i.instrumentType) ?? { invested: 0, current: 0 };
+      const prevT = byTypeMap.get(i.instrumentType) ?? {
+        invested: 0,
+        current: 0,
+      };
       prevT.invested += inv;
       prevT.current += cur;
       byTypeMap.set(i.instrumentType, prevT);

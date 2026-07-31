@@ -22,16 +22,23 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         /expired/i.test(msg) ||
         /jwt expired/i.test(msg)
       ) {
-        throw new UnauthorizedException('Sessão expirada. Faça login novamente.');
+        throw new UnauthorizedException(
+          'Sessão expirada. Faça login novamente.',
+        );
       }
       if (
         name === 'JsonWebTokenError' ||
         /invalid token/i.test(msg) ||
         /jwt malformed/i.test(msg)
       ) {
-        throw new UnauthorizedException('Token inválido. Faça login novamente.');
+        throw new UnauthorizedException(
+          'Token inválido. Faça login novamente.',
+        );
       }
-      throw err || new UnauthorizedException('Não autenticado. Faça login novamente.');
+      throw (
+        err ||
+        new UnauthorizedException('Não autenticado. Faça login novamente.')
+      );
     }
     return user;
   }

@@ -255,7 +255,9 @@ export class InsurancesAlertDigestService {
     if (soonCount > 0) {
       parts.push(`${soonCount} a vencer`);
     }
-    const summary = parts.length ? parts.join(' · ') : 'sem alertas de vigência';
+    const summary = parts.length
+      ? parts.join(' · ')
+      : 'sem alertas de vigência';
     return `Seguros — ${formatBrDate(dateYmd)} (${summary})`;
   }
 
@@ -281,9 +283,7 @@ export class InsurancesAlertDigestService {
         lines.push('  A vencer:');
         for (const b of ws.soon) {
           const when =
-            b.daysLeft === 0
-              ? 'vence hoje'
-              : `em ${b.daysLeft} dia(s)`;
+            b.daysLeft === 0 ? 'vence hoje' : `em ${b.daysLeft} dia(s)`;
           lines.push(
             `  - ${b.title} (${this.typeLabel(b.insuranceType)}) | fim ${formatBrDate(b.validityEnd)} (${when})`,
           );

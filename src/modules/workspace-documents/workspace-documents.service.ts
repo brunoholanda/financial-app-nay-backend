@@ -127,9 +127,7 @@ export class WorkspaceDocumentsService {
       throw new BadRequestException('Arquivo em falta ou vazio.');
     }
     if (file.size > MAX_BYTES) {
-      throw new BadRequestException(
-        'O arquivo excede o limite de 5 MB.',
-      );
+      throw new BadRequestException('O arquivo excede o limite de 5 MB.');
     }
     const ext = extname(file.originalname || '').toLowerCase();
     if (!ext || !ALLOWED_EXT.has(ext)) {
@@ -197,7 +195,10 @@ export class WorkspaceDocumentsService {
     }
   }
 
-  async openDownloadStream(workspaceId: string, id: string): Promise<{
+  async openDownloadStream(
+    workspaceId: string,
+    id: string,
+  ): Promise<{
     stream: ReturnType<typeof createReadStream>;
     row: WorkspaceDocument;
   }> {

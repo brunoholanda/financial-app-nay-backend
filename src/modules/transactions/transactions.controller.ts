@@ -42,7 +42,7 @@ export class TransactionsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.transactionsService.create(workspaceId, dto);
   }
@@ -55,7 +55,7 @@ export class TransactionsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.transactionsService.list(workspaceId, query);
   }
@@ -70,7 +70,7 @@ export class TransactionsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.transactionsService.update(workspaceId, id, dto);
   }
@@ -84,7 +84,7 @@ export class TransactionsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.transactionsService.remove(workspaceId, id);
   }

@@ -40,13 +40,10 @@ export class InvestmentsController {
   ) {}
 
   @Get('analytics/summary')
-  async analyticsSummary(
-    @CurrentUser() user: JwtPayload,
-    @Req() req: Request,
-  ) {
+  async analyticsSummary(@CurrentUser() user: JwtPayload, @Req() req: Request) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.analyticsService.getSummary(workspaceId);
   }
@@ -60,7 +57,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.createInvestment(workspaceId, dto);
   }
@@ -73,7 +70,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.getUserInvestments(workspaceId, query);
   }
@@ -86,7 +83,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.getInvestmentById(workspaceId, id);
   }
@@ -101,7 +98,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.updateInvestment(workspaceId, id, dto);
   }
@@ -115,7 +112,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.deleteInvestment(workspaceId, id);
   }
@@ -130,7 +127,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.addCashflow(workspaceId, id, dto);
   }
@@ -144,7 +141,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.listCashflows(workspaceId, id, query);
   }
@@ -159,7 +156,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.addYieldPoint(workspaceId, id, dto);
   }
@@ -173,7 +170,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.investmentsService.listYieldHistory(workspaceId, id, query);
   }
@@ -188,14 +185,9 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
-    return this.analyticsService.calculateDailyYield(
-      workspaceId,
-      id,
-      from,
-      to,
-    );
+    return this.analyticsService.calculateDailyYield(workspaceId, id, from, to);
   }
 
   @Get(':id/analytics/yield-monthly')
@@ -208,7 +200,7 @@ export class InvestmentsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.analyticsService.calculateMonthlyYield(
       workspaceId,

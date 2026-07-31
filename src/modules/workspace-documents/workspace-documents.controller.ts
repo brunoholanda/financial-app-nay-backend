@@ -24,6 +24,7 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
+import { DocumentQuotaService } from '../../common/services/document-quota.service';
 import {
   WorkspaceDocumentsService,
   type MemoryUploadedFile,
@@ -47,13 +48,11 @@ export class WorkspaceDocumentsController {
   constructor(
     private readonly documentsService: WorkspaceDocumentsService,
     private readonly workspaceAccess: WorkspaceAccessService,
+    private readonly documentQuota: DocumentQuotaService,
   ) {}
 
   private async ws(user: JwtPayload, req: Request) {
-    return this.workspaceAccess.resolveWorkspaceId(
-      user,
-      req.headers as Record<string, string | string[] | undefined>,
-    );
+    return this.workspaceAccess.resolveWorkspaceId(user, req.headers);
   }
 
   @Get()
@@ -64,6 +63,12 @@ export class WorkspaceDocumentsController {
   ) {
     const workspaceId = await this.ws(user, req);
     return this.documentsService.list(workspaceId, query);
+  }
+
+  /** Quanto da cota de documentos do plano já foi usada. */
+  @Get('quota')
+  quota(@CurrentUser() user: JwtPayload) {
+    return this.documentQuota.describe(user);
   }
 
   @Post()
@@ -83,6 +88,7 @@ export class WorkspaceDocumentsController {
     if (!file) {
       throw new BadRequestException('Envie um arquivo no campo «file».');
     }
+    await this.documentQuota.assertCanUpload(user);
     const workspaceId = await this.ws(user, req);
     return this.documentsService.create(workspaceId, file, dto);
   }
@@ -94,8 +100,10 @@ export class WorkspaceDocumentsController {
     @Param('id') id: string,
   ): Promise<StreamableFile> {
     const workspaceId = await this.ws(user, req);
-    const { stream, row } =
-      await this.documentsService.openDownloadStream(workspaceId, id);
+    const { stream, row } = await this.documentsService.openDownloadStream(
+      workspaceId,
+      id,
+    );
     return new StreamableFile(stream, {
       type: row.mimeType,
       disposition: attachmentDisposition(row.originalFileName),

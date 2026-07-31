@@ -22,8 +22,7 @@ export class MailController {
   @Post('test')
   async sendTest(@Body() dto: SendTestMailDto) {
     await this.mailService.verifyConnection();
-    const subject =
-      dto.subject?.trim() || 'Teste SMTP — App Financeiro';
+    const subject = dto.subject?.trim() || 'Teste SMTP — App Financeiro';
     const result = await this.mailService.send({
       to: dto.to,
       subject,

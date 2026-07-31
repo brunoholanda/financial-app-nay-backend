@@ -67,9 +67,7 @@ function addDaysToYmd(ymd: string, deltaDays: number): string {
 }
 
 function calendarDaysUntil(fromYmd: string, toYmd: string): number {
-  return Math.round(
-    (ymdToUtcMs(toYmd) - ymdToUtcMs(fromYmd)) / 86400000,
-  );
+  return Math.round((ymdToUtcMs(toYmd) - ymdToUtcMs(fromYmd)) / 86400000);
 }
 
 @Injectable()
@@ -110,9 +108,7 @@ export class BillsService {
     if (!isRecurring) return null;
     const end = recurrenceEndDate?.slice(0, 10);
     if (!end) {
-      throw new BadRequestException(
-        'Informe a data limite da recorrência.',
-      );
+      throw new BadRequestException('Informe a data limite da recorrência.');
     }
     if (end < dueDate.slice(0, 10)) {
       throw new BadRequestException(
@@ -376,15 +372,16 @@ export class BillsService {
       );
     }
 
-    if (dto.paymentSource === PaymentSource.CREDIT_CARD && !dto.workspaceAccountId) {
+    if (
+      dto.paymentSource === PaymentSource.CREDIT_CARD &&
+      !dto.workspaceAccountId
+    ) {
       throw new BadRequestException(
         'Selecione a conta para pagamento no cartão de crédito.',
       );
     }
     if (dto.paymentSource === PaymentSource.CASH && dto.workspaceAccountId) {
-      throw new BadRequestException(
-        'Para espécie não informe conta bancária.',
-      );
+      throw new BadRequestException('Para espécie não informe conta bancária.');
     }
 
     const paidDay = dto.paidAt.slice(0, 10);
@@ -433,7 +430,7 @@ export class BillsService {
     row.paidPaymentSource = dto.paymentSource;
     row.paidWorkspaceAccountId =
       dto.paymentSource === PaymentSource.CREDIT_CARD
-        ? dto.workspaceAccountId ?? null
+        ? (dto.workspaceAccountId ?? null)
         : null;
     row.linkedTransactionId = linkedTransactionId;
 

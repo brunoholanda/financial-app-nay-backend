@@ -4,8 +4,11 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from '../../database/entities/user.entity';
+import { LoginChallenge } from '../../database/entities/login-challenge.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { LoginTwoFactorService } from './login-two-factor.service';
+import { SignupService } from './signup.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 
@@ -25,10 +28,10 @@ import { UsersModule } from '../users/users.module';
         },
       }),
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, LoginChallenge]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, LoginTwoFactorService, SignupService, JwtStrategy],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

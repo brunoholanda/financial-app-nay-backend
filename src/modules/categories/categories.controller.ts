@@ -32,8 +32,15 @@ export class CategoriesController {
 
   @Post()
   @Roles(UserRole.MASTER)
-  async create(@CurrentUser() user: JwtPayload, @Req() req: Request, @Body() dto: CreateCategoryDto) {
-    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(user, req.headers as Record<string, string | string[] | undefined>);
+  async create(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Body() dto: CreateCategoryDto,
+  ) {
+    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
+      user,
+      req.headers,
+    );
     return this.categoriesService.create(workspaceId, dto);
   }
 
@@ -43,7 +50,10 @@ export class CategoriesController {
     @Req() req: Request,
     @Query() query: ListCategoriesQueryDto,
   ) {
-    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(user, req.headers as Record<string, string | string[] | undefined>);
+    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
+      user,
+      req.headers,
+    );
     return this.categoriesService.list(workspaceId, query);
   }
 
@@ -55,7 +65,10 @@ export class CategoriesController {
     @Param('id') id: string,
     @Body() dto: UpdateCategoryDto,
   ) {
-    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(user, req.headers as Record<string, string | string[] | undefined>);
+    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
+      user,
+      req.headers,
+    );
     return this.categoriesService.update(workspaceId, id, dto);
   }
 
@@ -66,7 +79,10 @@ export class CategoriesController {
     @Req() req: Request,
     @Param('id') id: string,
   ) {
-    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(user, req.headers as Record<string, string | string[] | undefined>);
+    const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
+      user,
+      req.headers,
+    );
     return this.categoriesService.remove(workspaceId, id);
   }
 }

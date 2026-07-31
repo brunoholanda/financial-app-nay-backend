@@ -70,8 +70,7 @@ export class WorkspaceAccountsService {
     const row = await this.accountRepo.findOne({ where: { id, workspaceId } });
     if (!row) throw new NotFoundException('Conta não encontrada');
     if (dto.name !== undefined) row.name = dto.name.trim();
-    if (dto.bankName !== undefined)
-      row.bankName = dto.bankName?.trim() ?? null;
+    if (dto.bankName !== undefined) row.bankName = dto.bankName?.trim() ?? null;
     if (dto.branch !== undefined) row.branch = dto.branch?.trim() ?? null;
     if (dto.accountNumber !== undefined)
       row.accountNumber = dto.accountNumber?.trim() ?? null;

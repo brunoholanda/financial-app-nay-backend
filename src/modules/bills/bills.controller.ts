@@ -37,10 +37,7 @@ export class BillsController {
   ) {}
 
   private async ws(user: JwtPayload, req: Request) {
-    return this.workspaceAccess.resolveWorkspaceId(
-      user,
-      req.headers as Record<string, string | string[] | undefined>,
-    );
+    return this.workspaceAccess.resolveWorkspaceId(user, req.headers);
   }
 
   @Get()

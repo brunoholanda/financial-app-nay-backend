@@ -5,7 +5,12 @@ import type { ParsedOfxTransaction } from './ofx-parser';
 
 function stripBom(buf: Buffer): Buffer {
   // UTF-8 BOM
-  if (buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
+  if (
+    buf.length >= 3 &&
+    buf[0] === 0xef &&
+    buf[1] === 0xbb &&
+    buf[2] === 0xbf
+  ) {
     return buf.subarray(3);
   }
   // UTF-16 LE BOM
@@ -215,7 +220,10 @@ export function parseCsvDate(raw: string): string | null {
 }
 
 export function parseCsvAmount(raw: string): number | null {
-  let s = raw.trim().replace(/\u00a0/g, ' ').replace(/\s/g, '');
+  let s = raw
+    .trim()
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s/g, '');
   if (!s) return null;
   s = s.replace(/^R\$\s*/i, '');
   // (1.234,56) → negative
@@ -231,7 +239,12 @@ export function parseCsvAmount(raw: string): number | null {
     s = s.slice(1);
   }
   // 1.234,56 (BR) vs 1,234.56 (US)
-  if (/\d,\d{2}$/.test(s) || (s.includes('.') && s.includes(',') && s.lastIndexOf(',') > s.lastIndexOf('.'))) {
+  if (
+    /\d,\d{2}$/.test(s) ||
+    (s.includes('.') &&
+      s.includes(',') &&
+      s.lastIndexOf(',') > s.lastIndexOf('.'))
+  ) {
     s = s.replace(/\./g, '').replace(',', '.');
   } else if (/\d\.\d{2}$/.test(s) && s.includes(',')) {
     s = s.replace(/,/g, '');
@@ -244,7 +257,10 @@ export function parseCsvAmount(raw: string): number | null {
   return neg ? -abs : abs;
 }
 
-function parseType(raw: string, signedAmount: number | null): LedgerType | null {
+function parseType(
+  raw: string,
+  signedAmount: number | null,
+): LedgerType | null {
   const n = normalizeHeader(raw);
   if (
     n === 'receita' ||
@@ -289,7 +305,10 @@ export function parseCsvBuffer(buffer: Buffer): ParsedOfxTransaction[] {
   } catch {
     throw new BadRequestException('Não foi possível ler o arquivo CSV.');
   }
-  text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  text = text
+    .replace(/^\uFEFF/, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
   const lines = text
     .split('\n')
     .map((l) => l.trimEnd())
@@ -336,7 +355,7 @@ export function parseCsvBuffer(buffer: Buffer): ParsedOfxTransaction[] {
 
   for (let i = start + 1; i < lines.length; i++) {
     const cells = splitCsvLine(lines[i], delimiter);
-    const dateRaw = cells[col.date!] ?? '';
+    const dateRaw = cells[col.date] ?? '';
     const date = parseCsvDate(dateRaw);
     if (!date) continue;
 
@@ -344,9 +363,12 @@ export function parseCsvBuffer(buffer: Buffer): ParsedOfxTransaction[] {
     if (col.amount !== undefined) {
       signed = parseCsvAmount(cells[col.amount] ?? '');
     } else {
-      const debit = col.debit !== undefined ? parseCsvAmount(cells[col.debit] ?? '') : null;
+      const debit =
+        col.debit !== undefined ? parseCsvAmount(cells[col.debit] ?? '') : null;
       const credit =
-        col.credit !== undefined ? parseCsvAmount(cells[col.credit] ?? '') : null;
+        col.credit !== undefined
+          ? parseCsvAmount(cells[col.credit] ?? '')
+          : null;
       if (credit !== null && credit !== 0) {
         signed = Math.abs(credit);
       } else if (debit !== null && debit !== 0) {
@@ -355,7 +377,7 @@ export function parseCsvBuffer(buffer: Buffer): ParsedOfxTransaction[] {
     }
     if (signed === null || signed === 0) continue;
 
-    const typeRaw = col.type !== undefined ? cells[col.type] ?? '' : '';
+    const typeRaw = col.type !== undefined ? (cells[col.type] ?? '') : '';
     const type = parseType(typeRaw, signed);
     if (!type) continue;
 
@@ -379,8 +401,7 @@ export function parseCsvBuffer(buffer: Buffer): ParsedOfxTransaction[] {
     const amount = Math.round(Math.abs(signed) * 100) / 100;
     if (amount < 0.01) continue;
 
-    const idRaw =
-      col.id !== undefined ? (cells[col.id] ?? '').trim() : '';
+    const idRaw = col.id !== undefined ? (cells[col.id] ?? '').trim() : '';
     const fitId = idRaw
       ? idRaw.slice(0, 128)
       : syntheticFitId([
@@ -410,6 +431,8 @@ export function parseCsvBuffer(buffer: Buffer): ParsedOfxTransaction[] {
     );
   }
 
-  rows.sort((a, b) => a.date.localeCompare(b.date) || a.fitId.localeCompare(b.fitId));
+  rows.sort(
+    (a, b) => a.date.localeCompare(b.date) || a.fitId.localeCompare(b.fitId),
+  );
   return rows;
 }

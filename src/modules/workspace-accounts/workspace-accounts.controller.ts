@@ -39,7 +39,7 @@ export class WorkspaceAccountsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.accountsService.list(workspaceId, query);
   }
@@ -53,7 +53,7 @@ export class WorkspaceAccountsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.accountsService.create(workspaceId, dto);
   }
@@ -68,7 +68,7 @@ export class WorkspaceAccountsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.accountsService.update(workspaceId, id, dto);
   }
@@ -82,7 +82,7 @@ export class WorkspaceAccountsController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.accountsService.remove(workspaceId, id);
   }

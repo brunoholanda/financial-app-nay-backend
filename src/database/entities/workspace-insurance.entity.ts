@@ -39,10 +39,20 @@ export class WorkspaceInsurance {
   })
   insuranceType: InsuranceType;
 
-  @Column({ type: 'varchar', length: 256, name: 'insurer_name', nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 256,
+    name: 'insurer_name',
+    nullable: true,
+  })
   insurerName: string | null;
 
-  @Column({ type: 'varchar', length: 120, name: 'policy_number', nullable: true })
+  @Column({
+    type: 'varchar',
+    length: 120,
+    name: 'policy_number',
+    nullable: true,
+  })
   policyNumber: string | null;
 
   /** Importância segurada / cobertura principal (referência financeira) */

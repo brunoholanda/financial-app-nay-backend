@@ -6,10 +6,7 @@ import {
   BillsDigestWorkspace,
   BillsService,
 } from './bills.service';
-import {
-  formatBrCurrency,
-  formatBrDate,
-} from '../../common/utils/brazil-date';
+import { formatBrCurrency, formatBrDate } from '../../common/utils/brazil-date';
 
 type MasterDigest = {
   masterId: string;
@@ -207,7 +204,9 @@ export class BillsAlertDigestService {
     if (dueTodayCount > 0) {
       parts.push(`${dueTodayCount} vencem hoje`);
     }
-    const summary = parts.length ? parts.join(' · ') : 'sem pendências críticas';
+    const summary = parts.length
+      ? parts.join(' · ')
+      : 'sem pendências críticas';
     return `Contas a pagar — ${formatBrDate(dateYmd)} (${summary})`;
   }
 

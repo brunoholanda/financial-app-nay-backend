@@ -1,8 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SavingsEntry } from '../../database/entities/savings-entry.entity';
-import { CreateSavingsEntryDto, UpdateSavingsEntryDto } from './dto/savings.dto';
+import {
+  CreateSavingsEntryDto,
+  UpdateSavingsEntryDto,
+} from './dto/savings.dto';
 import {
   ListSavingsQueryDto,
   SAVINGS_SORT_FIELDS,
@@ -109,7 +116,8 @@ export class SavingsService {
     if (dto.paidAmount !== undefined) row.paidAmount = paid.toFixed(2);
     if (dto.date !== undefined) row.date = dto.date.slice(0, 10);
     if (dto.description !== undefined) {
-      row.description = dto.description === null ? null : dto.description.trim();
+      row.description =
+        dto.description === null ? null : dto.description.trim();
     }
     return this.repo.save(row);
   }
@@ -157,9 +165,7 @@ export class SavingsService {
       .getRawOne<{ total: string }>();
 
     return {
-      savingsInCompetenceMonth: parseFloat(
-        comp?.total ?? '0',
-      ).toFixed(2),
+      savingsInCompetenceMonth: parseFloat(comp?.total ?? '0').toFixed(2),
       savingsByMonth: series,
     };
   }

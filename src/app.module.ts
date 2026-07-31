@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './database/entities/user.entity';
+import { LoginChallenge } from './database/entities/login-challenge.entity';
 import { Workspace } from './database/entities/workspace.entity';
 import { Category } from './database/entities/category.entity';
 import { Transaction } from './database/entities/transaction.entity';
@@ -15,6 +17,8 @@ import { SavingsEntry } from './database/entities/savings-entry.entity';
 import { WorkspaceDocument } from './database/entities/workspace-document.entity';
 import { WorkspaceInsurance } from './database/entities/workspace-insurance.entity';
 import { WorkspaceBill } from './database/entities/workspace-bill.entity';
+import { SupportTicket } from './database/entities/support-ticket.entity';
+import { SupportTicketMessage } from './database/entities/support-ticket-message.entity';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -31,6 +35,10 @@ import { InsurancesModule } from './modules/insurances/insurances.module';
 import { BillsModule } from './modules/bills/bills.module';
 import { BankImportModule } from './modules/bank-import/bank-import.module';
 import { MailModule } from './modules/mail/mail.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { ManagerModule } from './modules/manager/manager.module';
+import { SubscriptionInterceptor } from './common/interceptors/subscription.interceptor';
 import { SeedService } from './database/seed.service';
 
 @Module({
@@ -50,6 +58,7 @@ import { SeedService } from './database/seed.service';
         database: config.get('DATABASE_NAME', 'finance_app'),
         entities: [
           User,
+          LoginChallenge,
           Workspace,
           Category,
           Transaction,
@@ -62,6 +71,8 @@ import { SeedService } from './database/seed.service';
           WorkspaceDocument,
           WorkspaceInsurance,
           WorkspaceBill,
+          SupportTicket,
+          SupportTicketMessage,
         ],
         synchronize: config.get('DATABASE_SYNC', 'true') === 'true',
         logging: config.get('DATABASE_LOGGING', 'false') === 'true',
@@ -83,7 +94,13 @@ import { SeedService } from './database/seed.service';
     InsurancesModule,
     BillsModule,
     BankImportModule,
+    BillingModule,
+    TicketsModule,
+    ManagerModule,
   ],
-  providers: [SeedService],
+  providers: [
+    SeedService,
+    { provide: APP_INTERCEPTOR, useClass: SubscriptionInterceptor },
+  ],
 })
 export class AppModule {}

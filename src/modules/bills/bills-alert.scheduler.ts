@@ -19,10 +19,13 @@ export class BillsAlertScheduler {
   })
   async handleDailyDigest() {
     const enabled =
-      (this.config.get<string>('BILL_ALERT_CRON_ENABLED') ?? 'true').toLowerCase() !==
-      'false';
+      (
+        this.config.get<string>('BILL_ALERT_CRON_ENABLED') ?? 'true'
+      ).toLowerCase() !== 'false';
     if (!enabled) {
-      this.logger.debug('Cron de contas desabilitado (BILL_ALERT_CRON_ENABLED=false).');
+      this.logger.debug(
+        'Cron de contas desabilitado (BILL_ALERT_CRON_ENABLED=false).',
+      );
       return;
     }
 

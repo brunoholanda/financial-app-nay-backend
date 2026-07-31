@@ -19,7 +19,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
 import { SavingsService } from './savings.service';
-import { CreateSavingsEntryDto, UpdateSavingsEntryDto } from './dto/savings.dto';
+import {
+  CreateSavingsEntryDto,
+  UpdateSavingsEntryDto,
+} from './dto/savings.dto';
 import { ListSavingsQueryDto } from './dto/list-savings-query.dto';
 
 @Controller('savings')
@@ -31,10 +34,7 @@ export class SavingsController {
   ) {}
 
   private async ws(user: JwtPayload, req: Request) {
-    return this.workspaceAccess.resolveWorkspaceId(
-      user,
-      req.headers as Record<string, string | string[] | undefined>,
-    );
+    return this.workspaceAccess.resolveWorkspaceId(user, req.headers);
   }
 
   @Get()
@@ -49,7 +49,11 @@ export class SavingsController {
 
   @Post()
   @Roles(UserRole.MASTER)
-  async create(@CurrentUser() user: JwtPayload, @Req() req: Request, @Body() dto: CreateSavingsEntryDto) {
+  async create(
+    @CurrentUser() user: JwtPayload,
+    @Req() req: Request,
+    @Body() dto: CreateSavingsEntryDto,
+  ) {
     const workspaceId = await this.ws(user, req);
     return this.savingsService.create(workspaceId, dto);
   }

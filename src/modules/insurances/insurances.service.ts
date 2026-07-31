@@ -63,9 +63,7 @@ function addDaysToYmd(ymd: string, deltaDays: number): string {
 
 /** Dias até end (negativo se já passou), comparando só calendário local em string. */
 function calendarDaysUntil(fromYmd: string, endYmd: string): number {
-  return Math.round(
-    (ymdToUtcMs(endYmd) - ymdToUtcMs(fromYmd)) / 86400000,
-  );
+  return Math.round((ymdToUtcMs(endYmd) - ymdToUtcMs(fromYmd)) / 86400000);
 }
 
 @Injectable()
@@ -149,9 +147,7 @@ export class InsurancesService {
           ? dto.installmentCount!
           : null,
       installmentValue:
-        dto.installmentValue != null
-          ? dto.installmentValue.toFixed(2)
-          : null,
+        dto.installmentValue != null ? dto.installmentValue.toFixed(2) : null,
       coverages: this.normalizeCoverages(dto.coverages),
       validityStart: dto.validityStart.slice(0, 10),
       validityEnd: dto.validityEnd.slice(0, 10),
@@ -209,9 +205,7 @@ export class InsurancesService {
       row.installmentCount = nextInstCount ?? row.installmentCount;
       if (dto.installmentValue !== undefined) {
         row.installmentValue =
-          dto.installmentValue != null
-            ? dto.installmentValue.toFixed(2)
-            : null;
+          dto.installmentValue != null ? dto.installmentValue.toFixed(2) : null;
       }
     } else {
       row.installmentCount = null;

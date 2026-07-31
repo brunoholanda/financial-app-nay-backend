@@ -42,7 +42,7 @@ export class RecurringSeriesController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.recurringSeries.create(workspaceId, dto);
   }
@@ -55,7 +55,7 @@ export class RecurringSeriesController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.recurringSeries.listAll(workspaceId, query);
   }
@@ -70,7 +70,7 @@ export class RecurringSeriesController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
     return this.recurringSeries.update(workspaceId, id, dto);
   }
@@ -85,12 +85,8 @@ export class RecurringSeriesController {
   ) {
     const workspaceId = await this.workspaceAccess.resolveWorkspaceId(
       user,
-      req.headers as Record<string, string | string[] | undefined>,
+      req.headers,
     );
-    return this.recurringSeries.cancel(
-      workspaceId,
-      id,
-      dto.cancellationReason,
-    );
+    return this.recurringSeries.cancel(workspaceId, id, dto.cancellationReason);
   }
 }

@@ -10,11 +10,7 @@ import { WorkspaceAccountsModule } from '../workspace-accounts/workspace-account
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Investment,
-      InvestmentTransaction,
-      YieldHistory,
-    ]),
+    TypeOrmModule.forFeature([Investment, InvestmentTransaction, YieldHistory]),
     WorkspaceAccountsModule,
   ],
   controllers: [InvestmentsController],
