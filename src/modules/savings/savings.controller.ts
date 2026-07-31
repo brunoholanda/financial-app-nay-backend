@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -25,6 +26,8 @@ import {
 } from './dto/savings.dto';
 import { ListSavingsQueryDto } from './dto/list-savings-query.dto';
 
+@ApiTags('Economias')
+@ApiBearerAuth()
 @Controller('savings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SavingsController {

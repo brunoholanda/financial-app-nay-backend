@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { RecurringSeriesService } from './recurring-series.service';
 import {
@@ -25,6 +26,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
 
+@ApiTags('Recorrências')
+@ApiBearerAuth()
 @Controller('recurring')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class RecurringSeriesController {

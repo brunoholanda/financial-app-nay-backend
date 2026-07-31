@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -27,6 +28,8 @@ import {
 } from './dto/workspace-insurance.dto';
 import { ListInsurancesQueryDto } from './dto/list-insurances-query.dto';
 
+@ApiTags('Seguros')
+@ApiBearerAuth()
 @Controller('insurances')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class InsurancesController {

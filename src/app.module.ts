@@ -39,6 +39,7 @@ import { MailModule } from './modules/mail/mail.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { ManagerModule } from './modules/manager/manager.module';
+import { HealthModule } from './modules/health/health.module';
 import { SubscriptionInterceptor } from './common/interceptors/subscription.interceptor';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { rateLimitOptions } from './common/rate-limit.options';
@@ -105,6 +106,7 @@ import { SeedService } from './database/seed.service';
     BillingModule,
     TicketsModule,
     ManagerModule,
+    HealthModule,
   ],
   providers: [
     SeedService,

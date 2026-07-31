@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ManagerGuard } from '../../common/guards/manager.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -23,6 +24,8 @@ import {
 } from '../tickets/dto/ticket.dto';
 
 /** Todas as rotas exigem a flag de gestão no banco (não só o token). */
+// Rotas do dono do sistema: ficam fora da especificação pública.
+@ApiExcludeController()
 @Controller('manager')
 @UseGuards(JwtAuthGuard, ManagerGuard)
 export class ManagerController {

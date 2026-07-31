@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -7,6 +8,8 @@ import { UserRole } from '../../common/enums/user-role.enum';
 import { MailService } from './mail.service';
 import { SendTestMailDto } from './dto/send-test-mail.dto';
 
+// Diagnóstico interno de e-mail: fora da especificação pública.
+@ApiExcludeController()
 @Controller('mail')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.MASTER)

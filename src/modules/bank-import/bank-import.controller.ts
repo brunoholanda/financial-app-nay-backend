@@ -8,6 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Request } from 'express';
@@ -27,6 +28,8 @@ import { ConfirmOfxImportDto } from './dto/confirm-ofx-import.dto';
 
 const OFX_MAX_BYTES = 2 * 1024 * 1024;
 
+@ApiTags('Importação de extrato')
+@ApiBearerAuth()
 @Controller('bank-import')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.MASTER)

@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { InvestmentsService } from './investments.service';
 import { InvestmentAnalyticsService } from './investment-analytics.service';
@@ -30,6 +31,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { WorkspaceAccessService } from '../../common/services/workspace-access.service';
 
+@ApiTags('Investimentos')
+@ApiBearerAuth()
 @Controller('investments')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class InvestmentsController {

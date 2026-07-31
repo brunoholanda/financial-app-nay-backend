@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -28,6 +29,8 @@ import {
 } from './dto/workspace-bill.dto';
 import { ListBillsQueryDto } from './dto/list-bills-query.dto';
 
+@ApiTags('Contas a pagar')
+@ApiBearerAuth()
 @Controller('bills')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BillsController {
