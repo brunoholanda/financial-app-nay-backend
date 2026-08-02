@@ -89,6 +89,34 @@ export class WorkspaceBill {
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
+  /** Key R2 do comprovante de pagamento (imagem). */
+  @Column({
+    type: 'varchar',
+    length: 280,
+    name: 'receipt_object_key',
+    nullable: true,
+  })
+  receiptObjectKey: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 200,
+    name: 'receipt_mime_type',
+    nullable: true,
+  })
+  receiptMimeType: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 512,
+    name: 'receipt_original_file_name',
+    nullable: true,
+  })
+  receiptOriginalFileName: string | null;
+
+  @Column({ type: 'int', name: 'receipt_size_bytes', nullable: true })
+  receiptSizeBytes: number | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

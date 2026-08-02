@@ -18,9 +18,11 @@ import { SavingsEntry } from './database/entities/savings-entry.entity';
 import { WorkspaceDocument } from './database/entities/workspace-document.entity';
 import { WorkspaceInsurance } from './database/entities/workspace-insurance.entity';
 import { WorkspaceBill } from './database/entities/workspace-bill.entity';
+import { BillReceiptUploadSession } from './database/entities/bill-receipt-upload-session.entity';
 import { SupportTicket } from './database/entities/support-ticket.entity';
 import { SupportTicketMessage } from './database/entities/support-ticket-message.entity';
 import { CommonModule } from './common/common.module';
+import { ObjectStorageModule } from './common/storage/object-storage.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
@@ -55,6 +57,7 @@ import { SeedService } from './database/seed.service';
       useFactory: rateLimitOptions,
     }),
     MailModule,
+    ObjectStorageModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -80,6 +83,7 @@ import { SeedService } from './database/seed.service';
           WorkspaceDocument,
           WorkspaceInsurance,
           WorkspaceBill,
+          BillReceiptUploadSession,
           SupportTicket,
           SupportTicketMessage,
         ],

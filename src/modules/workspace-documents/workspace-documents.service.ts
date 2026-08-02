@@ -1,24 +1,34 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as fs from 'fs/promises';
-import { createReadStream, existsSync } from 'fs';
-import { join, extname, basename } from 'path';
 import { randomUUID } from 'crypto';
+import { basename, extname } from 'path';
+import type { Readable } from 'stream';
 import { Brackets, Repository } from 'typeorm';
+import {
+  buildDocumentObjectKey,
+  isR2ObjectKey,
+  R2_OBJECT_KEY_SQL,
+} from '../../common/storage/document-object-key';
+import {
+  OBJECT_STORAGE,
+  type ObjectStorage,
+} from '../../common/storage/object-storage.types';
 import { WorkspaceDocument } from '../../database/entities/workspace-document.entity';
+import { applyQueryBuilderOrder } from '../../common/utils/list-sort';
+import type { ListWorkspaceDocumentsQueryDto } from './dto/list-workspace-documents-query.dto';
+import { DOCUMENT_SORT_FIELDS } from './dto/list-workspace-documents-query.dto';
 import {
   CreateWorkspaceDocumentDto,
   UpdateWorkspaceDocumentDto,
 } from './dto/workspace-document.dto';
-import type { ListWorkspaceDocumentsQueryDto } from './dto/list-workspace-documents-query.dto';
-import { DOCUMENT_SORT_FIELDS } from './dto/list-workspace-documents-query.dto';
 import { WORKSPACE_DOCUMENT_MAX_BYTES } from './workspace-documents.constants';
-import { applyQueryBuilderOrder } from '../../common/utils/list-sort';
 
 const MAX_BYTES = WORKSPACE_DOCUMENT_MAX_BYTES;
 
@@ -55,26 +65,38 @@ const ALLOWED_EXT = new Set([
 ]);
 
 @Injectable()
-export class WorkspaceDocumentsService {
+export class WorkspaceDocumentsService implements OnModuleInit {
+  private readonly logger = new Logger(WorkspaceDocumentsService.name);
+
   constructor(
     @InjectRepository(WorkspaceDocument)
     private readonly repo: Repository<WorkspaceDocument>,
-    private readonly config: ConfigService,
+    @Inject(OBJECT_STORAGE)
+    private readonly storage: ObjectStorage,
   ) {}
 
-  private uploadRoot(): string {
-    return (
-      this.config.get<string>('DOCUMENTS_UPLOAD_DIR') ??
-      join(process.cwd(), 'uploads')
-    );
+  /** Remove metadados de arquivos antigos no disco local — só R2 permanece. */
+  async onModuleInit(): Promise<void> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .delete()
+      .from(WorkspaceDocument)
+      .where(
+        `stored_file_name NOT LIKE 'documentos/%' AND stored_file_name NOT LIKE 'comprovantes/%'`,
+      )
+      .execute();
+    const removed = result.affected ?? 0;
+    if (removed > 0) {
+      this.logger.warn(
+        `Removidos ${removed} documento(s) locais antigos do banco (apenas R2 é válido).`,
+      );
+    }
   }
 
-  private resolveDir(workspaceId: string): string {
-    return join(this.uploadRoot(), 'workspace-documents', workspaceId);
-  }
-
-  private fullPath(workspaceId: string, storedFileName: string): string {
-    return join(this.resolveDir(workspaceId), storedFileName);
+  private assertR2Row(row: WorkspaceDocument): void {
+    if (!isR2ObjectKey(row.storedFileName)) {
+      throw new NotFoundException('Documento não encontrado');
+    }
   }
 
   async list(
@@ -83,7 +105,8 @@ export class WorkspaceDocumentsService {
   ): Promise<WorkspaceDocument[]> {
     const qb = this.repo
       .createQueryBuilder('d')
-      .where('d.workspaceId = :wid', { wid: workspaceId });
+      .where('d.workspaceId = :wid', { wid: workspaceId })
+      .andWhere(R2_OBJECT_KEY_SQL);
 
     if (query?.scope) {
       qb.andWhere('d.personScope = :scope', { scope: query.scope });
@@ -144,11 +167,14 @@ export class WorkspaceDocumentsService {
   ): Promise<WorkspaceDocument> {
     this.validateUploadFile(file);
     const ext = extname(file.originalname || '').toLowerCase();
-    const storedFileName = `${randomUUID()}${ext}`;
-    const dir = this.resolveDir(workspaceId);
-    await fs.mkdir(dir, { recursive: true });
-    const full = this.fullPath(workspaceId, storedFileName);
-    await fs.writeFile(full, file.buffer);
+    const fileName = `${randomUUID()}${ext}`;
+    const objectKey = buildDocumentObjectKey(workspaceId, dto.kind, fileName);
+    const mimeType = (file.mimetype || 'application/octet-stream').slice(
+      0,
+      200,
+    );
+
+    await this.storage.putObject(objectKey, file.buffer, mimeType);
 
     const safeName = basename(file.originalname || 'documento')
       .replace(/[\r\n"]/g, '')
@@ -160,8 +186,8 @@ export class WorkspaceDocumentsService {
       personScope: dto.personScope,
       description: dto.description?.trim() || null,
       originalFileName: safeName || `documento${ext}`,
-      storedFileName,
-      mimeType: (file.mimetype || 'application/octet-stream').slice(0, 200),
+      storedFileName: objectKey,
+      mimeType,
       sizeBytes: file.size,
     });
     return this.repo.save(row);
@@ -174,6 +200,7 @@ export class WorkspaceDocumentsService {
   ): Promise<WorkspaceDocument> {
     const row = await this.repo.findOne({ where: { id, workspaceId } });
     if (!row) throw new NotFoundException('Documento não encontrado');
+    this.assertR2Row(row);
     if (dto.kind !== undefined) row.kind = dto.kind;
     if (dto.personScope !== undefined) row.personScope = dto.personScope;
     if (dto.description !== undefined) {
@@ -186,28 +213,27 @@ export class WorkspaceDocumentsService {
   async remove(workspaceId: string, id: string): Promise<void> {
     const row = await this.repo.findOne({ where: { id, workspaceId } });
     if (!row) throw new NotFoundException('Documento não encontrado');
-    const full = this.fullPath(workspaceId, row.storedFileName);
+    this.assertR2Row(row);
+    const key = row.storedFileName;
     await this.repo.remove(row);
-    try {
-      await fs.unlink(full);
-    } catch {
-      /* arquivo já ausente */
-    }
+    await this.storage.deleteObject(key);
   }
 
   async openDownloadStream(
     workspaceId: string,
     id: string,
   ): Promise<{
-    stream: ReturnType<typeof createReadStream>;
+    stream: Readable;
     row: WorkspaceDocument;
   }> {
     const row = await this.repo.findOne({ where: { id, workspaceId } });
     if (!row) throw new NotFoundException('Documento não encontrado');
-    const full = this.fullPath(workspaceId, row.storedFileName);
-    if (!existsSync(full)) {
+    this.assertR2Row(row);
+    try {
+      const stream = await this.storage.getObjectStream(row.storedFileName);
+      return { stream, row };
+    } catch {
       throw new NotFoundException('Arquivo não encontrado no armazenamento');
     }
-    return { stream: createReadStream(full), row };
   }
 }

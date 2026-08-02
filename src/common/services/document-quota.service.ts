@@ -72,6 +72,9 @@ export class DocumentQuotaService {
       .createQueryBuilder('d')
       .innerJoin(Workspace, 'w', 'w.id = d.workspaceId')
       .where('w.createdById = :ownerId', { ownerId })
+      .andWhere(
+        `(d.stored_file_name LIKE 'documentos/%' OR d.stored_file_name LIKE 'comprovantes/%')`,
+      )
       .getCount();
   }
 

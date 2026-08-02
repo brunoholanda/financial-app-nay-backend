@@ -44,7 +44,7 @@ export class WorkspaceDocument {
   @Column({ type: 'varchar', length: 512, name: 'original_file_name' })
   originalFileName: string;
 
-  /** Nome do ficheiro no disco (ex.: {uuid}.pdf), dentro da pasta do workspace */
+  /** Key no R2: documentos|comprovantes/{workspaceId}/{uuid}.ext */
   @Column({ type: 'varchar', length: 280, name: 'stored_file_name' })
   storedFileName: string;
 

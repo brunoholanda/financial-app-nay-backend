@@ -47,6 +47,7 @@ function attachmentDisposition(fileName: string): string {
 @ApiBearerAuth()
 @Controller('documents')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.MASTER)
 export class WorkspaceDocumentsController {
   constructor(
     private readonly documentsService: WorkspaceDocumentsService,
@@ -81,7 +82,6 @@ export class WorkspaceDocumentsController {
       limits: { fileSize: WORKSPACE_DOCUMENT_MAX_BYTES },
     }),
   )
-  @Roles(UserRole.MASTER)
   async create(
     @CurrentUser() user: JwtPayload,
     @Req() req: Request,
@@ -114,7 +114,6 @@ export class WorkspaceDocumentsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.MASTER)
   async update(
     @CurrentUser() user: JwtPayload,
     @Req() req: Request,
@@ -126,7 +125,6 @@ export class WorkspaceDocumentsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.MASTER)
   async remove(
     @CurrentUser() user: JwtPayload,
     @Req() req: Request,

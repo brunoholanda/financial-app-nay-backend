@@ -24,6 +24,7 @@ import { resolveFindOrder } from '../../common/utils/list-sort';
 import { todayYmdInTimeZone } from '../../common/utils/brazil-date';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { debitDateInCalendarMonth } from '../../common/utils/recurring-period';
+import { BillReceiptService } from './bill-receipt.service';
 
 export type BillAlertStatus = 'OVERDUE' | 'DUE_TODAY' | 'SOON';
 
@@ -79,6 +80,7 @@ export class BillsService {
     private readonly workspaceRepo: Repository<Workspace>,
     private readonly transactionsService: TransactionsService,
     private readonly categoriesService: CategoriesService,
+    private readonly billReceiptService: BillReceiptService,
   ) {}
 
   async list(
@@ -162,6 +164,10 @@ export class BillsService {
       paidWorkspaceAccountId: null,
       linkedTransactionId: null,
       notes: dto.notes?.trim() || null,
+      receiptObjectKey: null,
+      receiptMimeType: null,
+      receiptOriginalFileName: null,
+      receiptSizeBytes: null,
     });
     return this.repo.save(row);
   }
@@ -425,6 +431,12 @@ export class BillsService {
       linkedTransactionId = tx.id;
     }
 
+    const receipt = await this.billReceiptService.resolveReceiptForPay(
+      workspaceId,
+      id,
+      dto.receiptObjectKey,
+    );
+
     row.isPaid = true;
     row.paidAt = paidDay;
     row.paidPaymentSource = dto.paymentSource;
@@ -433,6 +445,12 @@ export class BillsService {
         ? (dto.workspaceAccountId ?? null)
         : null;
     row.linkedTransactionId = linkedTransactionId;
+    if (receipt) {
+      row.receiptObjectKey = receipt.receiptObjectKey;
+      row.receiptMimeType = receipt.receiptMimeType;
+      row.receiptOriginalFileName = receipt.receiptOriginalFileName;
+      row.receiptSizeBytes = receipt.receiptSizeBytes;
+    }
 
     const saved = await this.repo.save(row);
 
@@ -467,6 +485,10 @@ export class BillsService {
               paidWorkspaceAccountId: null,
               linkedTransactionId: null,
               notes: saved.notes,
+              receiptObjectKey: null,
+              receiptMimeType: null,
+              receiptOriginalFileName: null,
+              receiptSizeBytes: null,
             }),
           );
         }

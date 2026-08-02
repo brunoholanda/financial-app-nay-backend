@@ -109,4 +109,10 @@ export class PayWorkspaceBillDto {
   @ValidateIf((o: PayWorkspaceBillDto) => o.createTransaction === true)
   @IsUUID()
   categoryId?: string;
+
+  /** Key R2 do comprovante (upload autenticado ou sessão QR). */
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  receiptObjectKey?: string;
 }
